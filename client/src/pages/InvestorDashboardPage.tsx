@@ -1,120 +1,128 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useLocation } from 'wouter';
+import { Helmet } from 'react-helmet';
 import NavBar from '@/components/NavBar';
-import { Card, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import InvestorDashboard from '@/components/InvestorDashboard';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { getCurrentAccount } from '@/lib/web3';
 
 const InvestorDashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [location, navigate] = useLocation();
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   
-  // Hardcoded startups
-  const startups = [
-    {
-      id: 1,
-      name: "EcoSolutions",
-      description: "Sustainable energy solutions for residential buildings",
-      industry: "Energy",
-      stage: "Seed",
-      totalRaised: 250000,
-      investorCount: 12
-    },
-    {
-      id: 2,
-      name: "HealthTech AI",
-      description: "AI-powered medical diagnosis and monitoring tools",
-      industry: "Healthcare",
-      stage: "Series A",
-      totalRaised: 1500000,
-      investorCount: 24
-    },
-    {
-      id: 3,
-      name: "EduLearn",
-      description: "Personalized education platform for K-12 students",
-      industry: "Education",
-      stage: "Pre-seed",
-      totalRaised: 75000,
-      investorCount: 5
-    },
-    {
-      id: 4,
-      name: "FinTech Solutions",
-      description: "Next-generation payment processing and wealth management",
-      industry: "Finance",
-      stage: "Series B",
-      totalRaised: 8500000,
-      investorCount: 38
+  // Fetch startups data
+  const { 
+    data: startups = [], 
+    isLoading: startupsLoading, 
+    error: startupsError 
+  } = useQuery({
+    queryKey: ['/api/startups'],
+    queryFn: async () => {
+      const res = await fetch('/api/startups', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch startups');
+      }
+      return res.json();
     }
-  ];
+  });
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+  // Fetch unread messages count
+  const { 
+    data: messagesData, 
+    isLoading: messagesLoading 
+  } = useQuery({
+    queryKey: ['/api/messages/unread/count'],
+    queryFn: async () => {
+      const res = await fetch('/api/messages/unread/count', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch unread messages');
+      }
+      return res.json();
+    }
+  });
+
+  // Check if user already has a wallet connected
+  React.useEffect(() => {
+    const checkWallet = async () => {
+      const account = await getCurrentAccount();
+      if (account) {
+        setWalletAddress(account);
+      }
+    };
+    
+    checkWallet();
+  }, []);
+
+  // Handle investment
+  const handleInvest = () => {
+    // This will be called after successful investment
+    queryClient.invalidateQueries({ queryKey: ['/api/startups'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/transactions/investor'] });
   };
+
+  // Handle chat with founder
+  const handleChatWithFounder = (startupId: number) => {
+    // For now, just navigate to messages page
+    navigate(`/messages/${startupId}`);
+  };
+
+  // Loading state
+  if (startupsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (startupsError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+            <p className="text-gray-600 mb-6">Failed to load startups. Please try again later.</p>
+            <button 
+              className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/startups'] })}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Helmet title="Investor Dashboard | LaunchBlocks" />
       <NavBar />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Discover Startups
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Find and invest in promising startups from around the world.
-          </p>
-        </div>
-        
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {startups.map((startup) => (
-            <Card key={startup.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">
-                    {startup.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="ml-4">
-                    <CardTitle className="text-xl">{startup.name}</CardTitle>
-                    <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                      {startup.stage}
-                    </span>
-                  </div>
-                </div>
-                
-                <CardDescription className="text-gray-700 mb-6">
-                  {startup.description}
-                </CardDescription>
-                
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-gray-50 p-3 rounded">
-                    <div className="text-sm text-gray-500">Total Raised</div>
-                    <div className="font-semibold">{formatCurrency(startup.totalRaised)}</div>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <div className="text-sm text-gray-500">Industry</div>
-                    <div className="font-semibold">{startup.industry}</div>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <Button className="flex-1" onClick={() => alert(`Invest in ${startup.name}`)}>
-                    Invest
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => alert(`Chat with ${startup.name}`)}>
-                    Contact
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <InvestorDashboard 
+        startups={startups}
+        onInvest={handleInvest}
+        onChatWithFounder={handleChatWithFounder}
+      />
     </div>
   );
 };

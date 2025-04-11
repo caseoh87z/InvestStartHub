@@ -13,6 +13,7 @@ import StartupTransactions from "@/pages/StartupTransactions";
 import InvestorTransactions from "@/pages/InvestorTransactions";
 import Messages from "@/pages/Messages";
 import { useAuth } from "./lib/context/AuthContext";
+import { AuthProvider } from "./lib/context/AuthContext";
 import { useEffect } from "react";
 
 function Router() {
@@ -26,9 +27,18 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth/:type" component={Auth} />
       
-      {/* Direct routes with no protection for demo */}
+      {/* Startup routes */}
       <Route path="/startup/dashboard" component={StartupDashboardPage} />
+      <Route path="/startup/create" component={StartupCreate} />
+      <Route path="/startup/transactions" component={StartupTransactions} />
+      <Route path="/startup/:id" component={StartupProfile} />
+      
+      {/* Investor routes */}
       <Route path="/investor/dashboard" component={InvestorDashboardPage} />
+      <Route path="/investor/transactions" component={InvestorTransactions} />
+      
+      {/* Shared routes */}
+      <Route path="/messages/:userId?" component={Messages} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
@@ -40,8 +50,10 @@ function App() {
   console.log("Rendering App component");
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
