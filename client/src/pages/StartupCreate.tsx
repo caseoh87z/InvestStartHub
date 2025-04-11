@@ -28,7 +28,7 @@ const StartupCreate: React.FC = () => {
     name: '',
     description: '',
     pitch: '',
-    stage: 'Pre-seed',
+    stage: 'Idea',
     industry: 'Technology',
     location: '',
     upiId: '',
@@ -90,7 +90,13 @@ const StartupCreate: React.FC = () => {
         });
         
         console.log('Response status:', response.status);
-        console.log('Response headers:', JSON.stringify([...response.headers.entries()]));
+        
+        // Get header information without using iterator
+        const headers: Record<string, string> = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        console.log('Response headers:', JSON.stringify(headers));
         
         // First check if response is JSON or something else
         const contentType = response.headers.get('content-type');

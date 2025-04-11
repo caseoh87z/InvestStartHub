@@ -42,11 +42,11 @@ export function formatWalletAddress(address: string | undefined | null): string 
 // Get investment stages
 export function getInvestmentStages(): string[] {
   return [
-    'Pre-seed',
-    'Seed',
-    'Series A',
-    'Series B',
-    'Series C+',
+    'Idea',
+    'Prototype',
+    'MVP',
+    'Growth',
+    'Scale'
   ];
 }
 
