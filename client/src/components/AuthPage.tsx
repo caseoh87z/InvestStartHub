@@ -274,11 +274,12 @@ const AuthPage: React.FC = () => {
 
               {isLoginMode && (
                 <div className="text-sm">
-                  <Link href="/forgot-password">
-                    <a className="font-medium text-primary hover:text-blue-500">
-                      Forgot your password?
-                    </a>
-                  </Link>
+                  <span 
+                    className="font-medium text-primary hover:text-blue-500 cursor-pointer"
+                    onClick={() => navigate('/forgot-password')}
+                  >
+                    Forgot your password?
+                  </span>
                 </div>
               )}
             </div>

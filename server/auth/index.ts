@@ -39,24 +39,34 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
   try {
     // Get token from header
     const authHeader = req.headers.authorization;
+    log(`Auth header: ${authHeader ? 'present' : 'missing'}`, 'auth');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      log('No valid Bearer token found in Authorization header', 'auth');
       return res.status(401).json({ message: 'Authentication required' });
     }
     
     const token = authHeader.split(' ')[1];
+    log(`Verifying token: ${token.substring(0, 15)}...`, 'auth');
+    
     const decoded = verifyToken(token);
     
     if (!decoded) {
+      log('Token verification failed', 'auth');
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
+    
+    log(`Token decoded successfully, user ID: ${decoded.id}`, 'auth');
     
     // Find user by ID
     const user = await User.findById(decoded.id).select('-password');
     
     if (!user) {
+      log(`User with ID ${decoded.id} not found in database`, 'auth');
       return res.status(401).json({ message: 'User not found' });
     }
+    
+    log(`User found and authenticated: ${user.email}`, 'auth');
     
     // Set user in request object
     req.user = user;

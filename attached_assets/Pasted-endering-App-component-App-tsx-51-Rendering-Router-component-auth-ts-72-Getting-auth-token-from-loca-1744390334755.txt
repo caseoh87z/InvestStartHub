@@ -1,0 +1,64 @@
+endering App component
+App.tsx:51 Rendering Router component
+auth.ts:72 Getting auth token from localStorage: Token exists
+auth.ts:86 Authentication check: User is authenticated
+chunk-WERSD76P.js?v=2dbdac6f:521 Warning: validateDOMNesting(...): <a> cannot appear as a descendant of <a>.
+    at a
+    at a
+    at https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2dbdac6f:337:18
+    at div
+    at div
+    at form
+    at div
+    at div
+    at div
+    at AuthPage (https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/src/components/AuthPage.tsx?t=1744390231830:29:41)
+    at Auth (https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/src/pages/Auth.tsx?t=1744390231830:25:20)
+    at Route (https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2dbdac6f:323:16)
+    at Switch (https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2dbdac6f:379:17)
+    at Router
+    at QueryClientProvider (https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2dbdac6f:2805:3)
+    at App
+    at AuthProvider (https://69571d4b-eb56-4524-8f93-81dacb6e0885-00-y7uh2isj268f.sisko.replit.dev/src/lib/context/AuthContext.tsx?v=XITvsdj-geq2EkRK5WfS7:37:32)
+printWarning @ chunk-WERSD76P.js?v=2dbdac6f:521
+error @ chunk-WERSD76P.js?v=2dbdac6f:505
+validateDOMNesting @ chunk-WERSD76P.js?v=2dbdac6f:8256
+createInstance @ chunk-WERSD76P.js?v=2dbdac6f:8328
+completeWork @ chunk-WERSD76P.js?v=2dbdac6f:16290
+completeUnitOfWork @ chunk-WERSD76P.js?v=2dbdac6f:19224
+performUnitOfWork @ chunk-WERSD76P.js?v=2dbdac6f:19206
+workLoopSync @ chunk-WERSD76P.js?v=2dbdac6f:19137
+renderRootSync @ chunk-WERSD76P.js?v=2dbdac6f:19116
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=2dbdac6f:18874
+flushSyncCallbacks @ chunk-WERSD76P.js?v=2dbdac6f:9119
+commitRootImpl @ chunk-WERSD76P.js?v=2dbdac6f:19432
+commitRoot @ chunk-WERSD76P.js?v=2dbdac6f:19277
+finishConcurrentRender @ chunk-WERSD76P.js?v=2dbdac6f:18805
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=2dbdac6f:18718
+workLoop @ chunk-WERSD76P.js?v=2dbdac6f:197
+flushWork @ chunk-WERSD76P.js?v=2dbdac6f:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=2dbdac6f:384
+VM1858:2 Executing DR script (add)...
+VM1860:2 Executing DR script (add)...
+VM1867:2 Executing DR script (add)...
+AuthContext.tsx:45 Failed to get user data SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+checkAuth @ AuthContext.tsx:45
+await in checkAuth
+(anonymous) @ AuthContext.tsx:57
+commitHookEffectListMount @ chunk-WERSD76P.js?v=2dbdac6f:16915
+commitPassiveMountOnFiber @ chunk-WERSD76P.js?v=2dbdac6f:18156
+commitPassiveMountEffects_complete @ chunk-WERSD76P.js?v=2dbdac6f:18129
+commitPassiveMountEffects_begin @ chunk-WERSD76P.js?v=2dbdac6f:18119
+commitPassiveMountEffects @ chunk-WERSD76P.js?v=2dbdac6f:18109
+flushPassiveEffectsImpl @ chunk-WERSD76P.js?v=2dbdac6f:19490
+flushPassiveEffects @ chunk-WERSD76P.js?v=2dbdac6f:19447
+performSyncWorkOnRoot @ chunk-WERSD76P.js?v=2dbdac6f:18868
+flushSyncCallbacks @ chunk-WERSD76P.js?v=2dbdac6f:9119
+commitRootImpl @ chunk-WERSD76P.js?v=2dbdac6f:19432
+commitRoot @ chunk-WERSD76P.js?v=2dbdac6f:19277
+finishConcurrentRender @ chunk-WERSD76P.js?v=2dbdac6f:18805
+performConcurrentWorkOnRoot @ chunk-WERSD76P.js?v=2dbdac6f:18718
+workLoop @ chunk-WERSD76P.js?v=2dbdac6f:197
+flushWork @ chunk-WERSD76P.js?v=2dbdac6f:176
+performWorkUntilDeadline @ chunk-WERSD76P.js?v=2dbdac6f:384
+auth.ts:78 Removing auth token from localStorage

@@ -19,7 +19,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // User routes
   app.get("/api/users/me", authenticate, async (req: Request, res: Response) => {
-    res.json({ user: req.user });
+    try {
+      log(`Fetching user data for user ID: ${req.user?._id || 'unknown'}`, 'api');
+      res.json({ user: req.user });
+    } catch (error) {
+      log(`Error in /api/users/me: ${error}`, 'api');
+      res.status(500).json({ message: "Failed to retrieve user data" });
+    }
   });
 
   app.get("/api/users", authenticate, async (req: Request, res: Response) => {

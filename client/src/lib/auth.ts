@@ -43,21 +43,37 @@ export const getCurrentUser = async (): Promise<any> => {
   const token = localStorage.getItem('token');
   
   if (!token) {
+    console.log("No authentication token found");
     throw new Error('No authentication token found');
   }
   
-  const response = await fetch('/api/users/me', {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    },
-    credentials: 'include'
-  });
+  console.log("Attempting to get current user with token", token ? "Token exists" : "No token");
   
-  if (!response.ok) {
-    throw new Error('Failed to get current user');
+  try {
+    const response = await fetch('/api/users/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
+    
+    console.log("Current user API response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Current user API error response:", errorText);
+      throw new Error('Failed to get current user');
+    }
+    
+    const data = await response.json();
+    console.log("Current user data received:", data);
+    return data.user;
+  } catch (error) {
+    console.error("getCurrentUser error:", error);
+    throw error;
   }
-  
-  return await response.json();
 };
 
 // Store auth token
