@@ -75,7 +75,7 @@ const StartupCreate: React.FC = () => {
         throw new Error('Authentication token missing - please log in again');
       }
       
-      const headers = {
+      const requestHeaders = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       };
@@ -85,18 +85,18 @@ const StartupCreate: React.FC = () => {
         
         const response = await fetch('/api/startups', {
           method: 'POST',
-          headers: headers,
+          headers: requestHeaders,
           body: JSON.stringify(startupData)
         });
         
         console.log('Response status:', response.status);
         
         // Get header information without using iterator
-        const headers: Record<string, string> = {};
+        const responseHeaders: Record<string, string> = {};
         response.headers.forEach((value, key) => {
-          headers[key] = value;
+          responseHeaders[key] = value;
         });
-        console.log('Response headers:', JSON.stringify(headers));
+        console.log('Response headers:', JSON.stringify(responseHeaders));
         
         // First check if response is JSON or something else
         const contentType = response.headers.get('content-type');

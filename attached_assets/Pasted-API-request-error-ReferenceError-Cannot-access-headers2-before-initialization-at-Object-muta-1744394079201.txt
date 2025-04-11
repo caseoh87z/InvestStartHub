@@ -1,0 +1,64 @@
+API request error: ReferenceError: Cannot access 'headers2' before initialization
+    at Object.mutationFn (StartupCreate.tsx:88:20)
+    at Object.fn (@tanstack_react-query.js?v=2dbdac6f:1189:29)
+    at run (@tanstack_react-query.js?v=2dbdac6f:494:49)
+    at Object.start (@tanstack_react-query.js?v=2dbdac6f:536:9)
+    at _a6.execute (@tanstack_react-query.js?v=2dbdac6f:1225:56)
+    at async handleSubmit (StartupCreate.tsx:252:7)
+mutationFn @ StartupCreate.tsx:131
+fn @ @tanstack_react-query.js?v=2dbdac6f:1189
+run @ @tanstack_react-query.js?v=2dbdac6f:494
+start @ @tanstack_react-query.js?v=2dbdac6f:536
+execute @ @tanstack_react-query.js?v=2dbdac6f:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=2dbdac6f:2630
+handleSubmit @ StartupCreate.tsx:252
+callCallback2 @ chunk-WERSD76P.js?v=2dbdac6f:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=2dbdac6f:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=2dbdac6f:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=2dbdac6f:3736
+executeDispatch @ chunk-WERSD76P.js?v=2dbdac6f:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=2dbdac6f:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=2dbdac6f:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=2dbdac6f:7051
+(anonymous) @ chunk-WERSD76P.js?v=2dbdac6f:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=2dbdac6f:18913
+batchedUpdates @ chunk-WERSD76P.js?v=2dbdac6f:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=2dbdac6f:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=2dbdac6f:5478
+dispatchEvent @ chunk-WERSD76P.js?v=2dbdac6f:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=2dbdac6f:5449
+StartupCreate.tsx:144 Create startup error: ReferenceError: Cannot access 'headers2' before initialization
+    at Object.mutationFn (StartupCreate.tsx:88:20)
+    at Object.fn (@tanstack_react-query.js?v=2dbdac6f:1189:29)
+    at run (@tanstack_react-query.js?v=2dbdac6f:494:49)
+    at Object.start (@tanstack_react-query.js?v=2dbdac6f:536:9)
+    at _a6.execute (@tanstack_react-query.js?v=2dbdac6f:1225:56)
+    at async handleSubmit (StartupCreate.tsx:252:7)
+onError @ StartupCreate.tsx:144
+execute @ @tanstack_react-query.js?v=2dbdac6f:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=2dbdac6f:2630
+handleSubmit @ StartupCreate.tsx:252
+callCallback2 @ chunk-WERSD76P.js?v=2dbdac6f:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=2dbdac6f:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=2dbdac6f:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=2dbdac6f:3736
+executeDispatch @ chunk-WERSD76P.js?v=2dbdac6f:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=2dbdac6f:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=2dbdac6f:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=2dbdac6f:7051
+(anonymous) @ chunk-WERSD76P.js?v=2dbdac6f:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=2dbdac6f:18913
+batchedUpdates @ chunk-WERSD76P.js?v=2dbdac6f:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=2dbdac6f:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=2dbdac6f:5478
+dispatchEvent @ chunk-WERSD76P.js?v=2dbdac6f:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=2dbdac6f:5449
+StartupCreate.tsx:148 Error details: Cannot access 'headers2' before initialization ReferenceError: Cannot access 'headers2' before initialization
+    at Object.mutationFn (https://62877e4b-1ff4-4d02-9442-96a857a0fb05-00-1wgrk1yza5xlw.pike.replit.dev/src/pages/StartupCreate.tsx?t=1744393858556:95:20)
+    at Object.fn (https://62877e4b-1ff4-4d02-9442-96a857a0fb05-00-1wgrk1yza5xlw.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2dbdac6f:1189:29)
+    at run (https://62877e4b-1ff4-4d02-9442-96a857a0fb05-00-1wgrk1yza5xlw.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2dbdac6f:494:49)
+    at Object.start (https://62877e4b-1ff4-4d02-9442-96a857a0fb05-00-1wgrk1yza5xlw.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2dbdac6f:536:9)
+    at _a6.execute (https://62877e4b-1ff4-4d02-9442-96a857a0fb05-00-1wgrk1yza5xlw.pike.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2dbdac6f:1225:56)
+    at async handleSubmit (https://62877e4b-1ff4-4d02-9442-96a857a0fb05-00-1wgrk1yza5xlw.pike.replit.dev/src/pages/StartupCreate.tsx?t=1744393858556:224:7)
