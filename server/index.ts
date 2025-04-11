@@ -3,6 +3,8 @@ import { createServer } from "http";
 import { setupVite, serveStatic, log } from "./vite";
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
+import { registerRoutes } from "./routes";
+import { registerAuthRoutes } from "./auth";
 
 const app = express();
 app.use(express.json());
@@ -15,6 +17,9 @@ app.get('/api/test', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+
+// Register additional auth routes
+registerAuthRoutes(app);
 
 // Connect to MongoDB
 const connectDB = async (): Promise<boolean> => {
@@ -84,6 +89,9 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   try {
     // Create HTTP server
     const httpServer = createServer(app);
+    
+    // Register API routes
+    await registerRoutes(app);
     
     // Setup Vite in development
     if (app.get("env") === "development") {

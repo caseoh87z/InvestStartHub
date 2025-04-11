@@ -81,6 +81,8 @@ const StartupCreate: React.FC = () => {
       };
       
       try {
+        console.log('Making request to /api/startups with data:', JSON.stringify(startupData));
+        
         const response = await fetch('/api/startups', {
           method: 'POST',
           headers: headers,
@@ -88,14 +90,37 @@ const StartupCreate: React.FC = () => {
         });
         
         console.log('Response status:', response.status);
+        console.log('Response headers:', JSON.stringify([...response.headers.entries()]));
+        
+        // First check if response is JSON or something else
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+          let errorMessage;
+          
+          // Check if it's JSON or text
+          if (contentType && contentType.includes('application/json')) {
+            const errorJson = await response.json();
+            console.error('JSON Error response:', errorJson);
+            errorMessage = errorJson.message || JSON.stringify(errorJson);
+          } else {
+            const errorText = await response.text();
+            console.error('Text Error response:', errorText);
+            errorMessage = errorText;
+          }
+          
+          throw new Error(`Server error: ${response.status} - ${errorMessage || response.statusText}`);
         }
         
-        return await response.json();
+        // Check content type again for successful response
+        if (contentType && contentType.includes('application/json')) {
+          return await response.json();
+        } else {
+          const text = await response.text();
+          console.error('Unexpected non-JSON response:', text);
+          throw new Error('Server returned non-JSON response');
+        }
       } catch (error) {
         console.error('API request error:', error);
         throw error;
