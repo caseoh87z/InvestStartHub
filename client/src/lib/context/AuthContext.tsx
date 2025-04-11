@@ -39,10 +39,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       if (isAuthenticated()) {
         try {
-          const userData = await getCurrentUser();
-          setUser(userData);
+          // Get user data from localStorage instead of API
+          const token = localStorage.getItem('token');
+          if (token) {
+            // Parse JWT token to extract user data
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+              atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+            );
+            
+            const payload = JSON.parse(jsonPayload);
+            console.log("Extracted user info from token:", payload);
+            
+            // Just use the data from the token instead of making an API call
+            setUser({
+              id: payload.id,
+              email: payload.email,
+              role: payload.role,
+              // Other fields like walletAddress will not be available from the token
+            });
+          }
         } catch (error) {
-          console.error('Failed to get user data', error);
+          console.error('Failed to parse user data from token', error);
           logout();
           toast({
             title: "Session expired",

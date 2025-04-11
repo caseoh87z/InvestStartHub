@@ -23,28 +23,42 @@ interface ProtectedRouteProps {
 
 // Protected route wrapper
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ component: Component, requiredRole = null }) => {
-  const { isAuth, user } = useAuth();
+  const { isAuth, user, isLoading } = useAuth();
   const [, navigate] = useLocation();
   
+  console.log(`ProtectedRoute: isAuth=${isAuth}, isLoading=${isLoading}, user.role=${user?.role}, requiredRole=${requiredRole}`);
+  
+  // Show loading state while auth is being checked
+  if (isLoading) {
+    console.log('Auth loading, showing spinner');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
   useEffect(() => {
-    // If not authenticated, redirect to login
-    if (!isAuth) {
-      navigate('/auth/signin');
+    // If not authenticated and done loading, redirect to login
+    if (!isLoading && !isAuth) {
+      console.log('Not authenticated, redirecting to login');
+      window.location.href = '/auth/login'; // Use hard navigation to avoid routing issues
       return;
     }
     
     // If role is required but user doesn't have it, redirect to appropriate dashboard
-    if (requiredRole && user?.role !== requiredRole) {
+    if (!isLoading && isAuth && requiredRole && user?.role !== requiredRole) {
+      console.log(`Role mismatch: user=${user?.role}, required=${requiredRole}, redirecting`);
       if (user?.role === 'founder') {
-        navigate('/startup/dashboard');
+        window.location.href = '/startup/dashboard'; // Use hard navigation
       } else if (user?.role === 'investor') {
-        navigate('/investor/dashboard');
+        window.location.href = '/investor/dashboard'; // Use hard navigation
       }
     }
-  }, [isAuth, user, requiredRole, navigate]);
+  }, [isAuth, user, requiredRole, navigate, isLoading]);
 
-  // Only render the component if authenticated
-  return isAuth && (!requiredRole || user?.role === requiredRole) ? <Component /> : null;
+  // Only render the component if authenticated and role matches
+  return (!isLoading && isAuth && (!requiredRole || user?.role === requiredRole)) ? <Component /> : null;
 };
 
 function Router() {
