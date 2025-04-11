@@ -11,53 +11,15 @@ import {
 import { ZodError } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Server as SocketServer } from "socket.io";
+import { setupSocketIO } from "./socket";
 
 const JWT_SECRET = process.env.JWT_SECRET || "launchblocks_secret_key";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
-  // Socket.io setup for real-time messaging
-  const io = new SocketServer(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
-  });
-  
-  // Socket.io connection handling
-  io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-    
-    // Join a room based on user ID
-    socket.on("join", (userId: string) => {
-      socket.join(userId);
-      console.log(`User ${userId} joined their room`);
-    });
-    
-    // Handle new messages
-    socket.on("send_message", async (data: { senderId: number, receiverId: number, content: string }) => {
-      try {
-        const message = await storage.createMessage({
-          senderId: data.senderId,
-          receiverId: data.receiverId,
-          content: data.content
-        });
-        
-        // Send to both sender and receiver
-        io.to(data.receiverId.toString()).emit("receive_message", message);
-        io.to(data.senderId.toString()).emit("message_sent", message);
-      } catch (error) {
-        console.error("Error saving message:", error);
-      }
-    });
-    
-    // Handle disconnect
-    socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
-    });
-  });
+  // Setup Socket.io with our custom manager
+  setupSocketIO(httpServer);
   
   // Authentication middleware
   const authenticateUser = async (req: Request, res: Response, next: Function) => {
@@ -191,6 +153,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = req.body.authenticatedUser;
     const { password: _, ...userData } = user;
     res.json(userData);
+  });
+
+  app.get("/api/users", authenticateUser, async (req, res) => {
+    try {
+      // Get all users but remove sensitive information
+      const allUsers = await Promise.all((await storage.getAllUsers()).map(async (user) => {
+        const { password, ...userData } = user;
+        return userData;
+      }));
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Failed to get users" });
+    }
   });
   
   // Startup routes
