@@ -102,6 +102,7 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   senderId: true,
   receiverId: true,
   content: true,
+  createdAt: true,
 });
 
 // Types

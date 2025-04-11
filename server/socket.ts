@@ -45,7 +45,6 @@ export function setupSocketIO(httpServer: HttpServer) {
           senderId: messageData.senderId,
           receiverId: messageData.receiverId,
           content: messageData.content,
-          read: false,
           createdAt: new Date().toISOString(),
         };
         

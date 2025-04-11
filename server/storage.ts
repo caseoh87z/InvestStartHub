@@ -82,11 +82,16 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.walletAddress === walletAddress);
   }
   
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const newUser: User = { 
       ...user, 
       id,
+      walletAddress: user.walletAddress || null,
       createdAt: new Date()
     };
     this.users.set(id, newUser);
@@ -111,6 +116,8 @@ export class MemStorage implements IStorage {
     const newStartup: Startup = { 
       ...startup, 
       id, 
+      upiId: startup.upiId || null,
+      upiQrCode: startup.upiQrCode || null,
       totalRaised: 0,
       totalInvestors: 0,
       createdAt: new Date()
@@ -174,6 +181,7 @@ export class MemStorage implements IStorage {
     const newTransaction: Transaction = { 
       ...transaction, 
       id, 
+      transactionId: transaction.transactionId || null,
       createdAt: new Date()
     };
     this.transactions.set(id, newTransaction);
