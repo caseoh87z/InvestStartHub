@@ -6,6 +6,8 @@ export interface IMessage extends Document {
   receiverId: mongoose.Types.ObjectId | IUser;
   content: string;
   read: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const MessageSchema = new Schema<IMessage>({
@@ -27,8 +29,12 @@ const MessageSchema = new Schema<IMessage>({
     type: Boolean,
     default: false
   }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
-export default mongoose.model<IMessage>('Message', MessageSchema);
+// Create indexes for faster queries
+MessageSchema.index({ senderId: 1, receiverId: 1 });
+MessageSchema.index({ receiverId: 1, read: 1 });
+
+const Message = mongoose.model<IMessage>('Message', MessageSchema);
+
+export default Message;
