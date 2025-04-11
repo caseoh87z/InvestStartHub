@@ -94,6 +94,7 @@ function Router() {
 }
 
 function App() {
+  console.log("Rendering App component");
   return (
     <QueryClientProvider client={queryClient}>
       <Router />

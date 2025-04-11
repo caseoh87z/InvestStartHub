@@ -57,55 +57,72 @@ const AuthPage: React.FC = () => {
     }
     
     setIsLoading(true);
+    console.log("Authentication started...");
     
     try {
       if (isLoginMode) {
         // Login
+        console.log("Attempting login with:", email);
         const result = await login({ email, password });
+        console.log("Login successful, received data:", result);
         
         // Store token and user data first
         authLogin(result.token, result.user);
+        console.log("Auth context updated with token and user data");
         
         toast({
           title: "Login successful",
           description: "Welcome back to LaunchBlocks!",
         });
         
+        // Determine target URL
+        const targetUrl = result.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
+        console.log("Will navigate to:", targetUrl);
+        
         // Short delay to ensure auth context is updated
         setTimeout(() => {
+          console.log("Navigating to:", targetUrl);
           // Redirect based on user role
           if (result.user.role === 'founder') {
-            navigate('/startup/dashboard');
+            window.location.href = '/startup/dashboard'; // Force hard navigation
           } else {
-            navigate('/investor/dashboard');
+            window.location.href = '/investor/dashboard'; // Force hard navigation
           }
-        }, 100);
+        }, 300);
       } else {
         // Registration
+        console.log("Attempting registration with:", email, "as", role);
         const result = await register({ 
           email, 
           password, 
           role,
           walletAddress: walletAddress || undefined
         });
+        console.log("Registration successful, received data:", result);
         
         // Store token and user data first
         authLogin(result.token, result.user);
+        console.log("Auth context updated with token and user data");
         
         toast({
           title: "Registration successful",
           description: "Welcome to LaunchBlocks!",
         });
         
+        // Determine target URL
+        const targetUrl = role === 'founder' ? '/startup/create' : '/investor/dashboard';
+        console.log("Will navigate to:", targetUrl);
+        
         // Short delay to ensure auth context is updated
         setTimeout(() => {
+          console.log("Navigating to:", targetUrl);
           // Redirect based on user role
           if (role === 'founder') {
-            navigate('/startup/create');
+            window.location.href = '/startup/create'; // Force hard navigation
           } else {
-            navigate('/investor/dashboard');
+            window.location.href = '/investor/dashboard'; // Force hard navigation
           }
-        }, 100);
+        }, 300);
       }
     } catch (error) {
       console.error('Authentication error:', error);
