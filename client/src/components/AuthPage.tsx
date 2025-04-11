@@ -62,6 +62,8 @@ const AuthPage: React.FC = () => {
       if (isLoginMode) {
         // Login
         const result = await login({ email, password });
+        
+        // Store token and user data first
         authLogin(result.token, result.user);
         
         toast({
@@ -69,12 +71,15 @@ const AuthPage: React.FC = () => {
           description: "Welcome back to LaunchBlocks!",
         });
         
-        // Redirect based on user role
-        if (result.user.role === 'founder') {
-          navigate('/startup/dashboard');
-        } else {
-          navigate('/investor/dashboard');
-        }
+        // Short delay to ensure auth context is updated
+        setTimeout(() => {
+          // Redirect based on user role
+          if (result.user.role === 'founder') {
+            navigate('/startup/dashboard');
+          } else {
+            navigate('/investor/dashboard');
+          }
+        }, 100);
       } else {
         // Registration
         const result = await register({ 
@@ -84,6 +89,7 @@ const AuthPage: React.FC = () => {
           walletAddress: walletAddress || undefined
         });
         
+        // Store token and user data first
         authLogin(result.token, result.user);
         
         toast({
@@ -91,12 +97,15 @@ const AuthPage: React.FC = () => {
           description: "Welcome to LaunchBlocks!",
         });
         
-        // Redirect based on user role
-        if (role === 'founder') {
-          navigate('/startup/create');
-        } else {
-          navigate('/investor/dashboard');
-        }
+        // Short delay to ensure auth context is updated
+        setTimeout(() => {
+          // Redirect based on user role
+          if (role === 'founder') {
+            navigate('/startup/create');
+          } else {
+            navigate('/investor/dashboard');
+          }
+        }, 100);
       }
     } catch (error) {
       console.error('Authentication error:', error);
