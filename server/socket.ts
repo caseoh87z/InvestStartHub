@@ -45,7 +45,6 @@ export function setupSocketIO(httpServer: HttpServer) {
           senderId: messageData.senderId,
           receiverId: messageData.receiverId,
           content: messageData.content,
-          createdAt: new Date().toISOString(),
         };
         
         const newMessage = await storage.createMessage(newMessageData);
@@ -90,13 +89,12 @@ export function setupSocketIO(httpServer: HttpServer) {
     // Handle disconnect
     socket.on('disconnect', () => {
       // Remove from active users
-      for (const [userId, socketId] of activeUsers.entries()) {
+      activeUsers.forEach((socketId, userId) => {
         if (socketId === socket.id) {
           activeUsers.delete(userId);
           console.log(`User ${userId} disconnected`);
-          break;
         }
-      }
+      });
     });
   });
 
