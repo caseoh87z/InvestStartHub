@@ -116,7 +116,9 @@ const InvestorDashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Helmet title="Investor Dashboard | LaunchBlocks" />
+      <Helmet>
+        <title>Investor Dashboard | LaunchBlocks</title>
+      </Helmet>
       <NavBar />
       <InvestorDashboard 
         startups={startups}

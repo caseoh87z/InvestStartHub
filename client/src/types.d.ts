@@ -5,6 +5,7 @@ declare module 'react-helmet' {
   
   interface HelmetProps {
     htmlAttributes?: any;
+    titleAttributes?: any;
     title?: string;
     titleTemplate?: string;
     defaultTitle?: string;
@@ -15,6 +16,7 @@ declare module 'react-helmet' {
     noscript?: any[];
     style?: any[];
     onChangeClientState?: (newState: any, addedTags: any, removedTags: any) => void;
+    children?: React.ReactNode;
   }
   
   export class Helmet extends React.Component<HelmetProps> {

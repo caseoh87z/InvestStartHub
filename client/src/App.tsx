@@ -13,7 +13,6 @@ import StartupTransactions from "@/pages/StartupTransactions";
 import InvestorTransactions from "@/pages/InvestorTransactions";
 import Messages from "@/pages/Messages";
 import { useAuth } from "./lib/context/AuthContext";
-import { AuthProvider } from "./lib/context/AuthContext";
 import { useEffect } from "react";
 
 function Router() {
@@ -50,10 +49,8 @@ function App() {
   console.log("Rendering App component");
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
+      <Router />
+      <Toaster />
     </QueryClientProvider>
   );
 }
