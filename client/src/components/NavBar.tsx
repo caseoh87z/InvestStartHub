@@ -33,29 +33,30 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/">
-              <a className="flex-shrink-0 flex items-center">
+            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
                 <i className="fas fa-cubes text-accent text-2xl mr-2"></i>
                 <span className={`text-xl font-bold ${transparent ? 'text-white' : 'text-gray-900'}`}>LaunchBlocks</span>
-              </a>
-            </Link>
+            </div>
             
             <nav className="hidden md:ml-6 md:flex md:space-x-8">
-              <Link href="/#features">
-                <a className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium`}>
-                  Features
-                </a>
-              </Link>
-              <Link href="/#how-it-works">
-                <a className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium`}>
-                  How It Works
-                </a>
-              </Link>
-              <Link href="/#featured-startups">
-                <a className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium`}>
-                  Featured Startups
-                </a>
-              </Link>
+              <div 
+                className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
+                onClick={() => navigate('/#features')}
+              >
+                Features
+              </div>
+              <div 
+                className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
+                onClick={() => navigate('/#how-it-works')}
+              >
+                How It Works
+              </div>
+              <div 
+                className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
+                onClick={() => navigate('/#featured-startups')}
+              >
+                Featured Startups
+              </div>
             </nav>
           </div>
           
@@ -107,16 +108,18 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
               </>
             ) : (
               <>
-                <Link href="/auth/signin">
-                  <a className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium`}>
-                    Sign In
-                  </a>
-                </Link>
-                <Link href="/auth/signup">
-                  <a className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-700">
-                    Sign Up
-                  </a>
-                </Link>
+                <div 
+                  className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
+                  onClick={() => navigate('/auth/signin')}
+                >
+                  Sign In
+                </div>
+                <div 
+                  className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-700 cursor-pointer"
+                  onClick={() => navigate('/auth/signup')}
+                >
+                  Sign Up
+                </div>
               </>
             )}
             
@@ -133,45 +136,69 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="pt-2 pb-3 space-y-1">
-              <Link href="/#features">
-                <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Features</a>
-              </Link>
-              <Link href="/#how-it-works">
-                <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">How It Works</a>
-              </Link>
-              <Link href="/#featured-startups">
-                <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Featured Startups</a>
-              </Link>
+              <div
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                onClick={() => navigate('/#features')}
+              >
+                Features
+              </div>
+              <div
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                onClick={() => navigate('/#how-it-works')}
+              >
+                How It Works
+              </div>
+              <div
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                onClick={() => navigate('/#featured-startups')}
+              >
+                Featured Startups
+              </div>
               
               {isAuth ? (
                 <>
                   {user?.role === 'founder' ? (
-                    <Link href="/startup/dashboard">
-                      <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Startup Dashboard</a>
-                    </Link>
+                    <div
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => navigate('/startup/dashboard')}
+                    >
+                      Startup Dashboard
+                    </div>
                   ) : (
-                    <Link href="/investor/dashboard">
-                      <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Investor Dashboard</a>
-                    </Link>
+                    <div
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => navigate('/investor/dashboard')}
+                    >
+                      Investor Dashboard
+                    </div>
                   )}
-                  <Link href="/messages">
-                    <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Messages</a>
-                  </Link>
-                  <button 
+                  <div
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate('/messages')}
+                  >
+                    Messages
+                  </div>
+                  <div
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
                     onClick={handleLogout}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   >
                     Log out
-                  </button>
+                  </div>
                 </>
               ) : (
                 <>
-                  <Link href="/auth/signin">
-                    <a className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Sign In</a>
-                  </Link>
-                  <Link href="/auth/signup">
-                    <a className="block px-3 py-2 rounded-md text-base font-medium text-primary hover:text-blue-700 hover:bg-gray-50">Sign Up</a>
-                  </Link>
+                  <div
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate('/auth/signin')}
+                  >
+                    Sign In
+                  </div>
+                  <div
+                    className="block px-3 py-2 rounded-md text-base font-medium text-primary hover:text-blue-700 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate('/auth/signup')}
+                  >
+                    Sign Up
+                  </div>
                 </>
               )}
             </div>

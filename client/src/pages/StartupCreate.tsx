@@ -138,7 +138,8 @@ const StartupCreate: React.FC = () => {
         title: "Startup created successfully!",
         description: "Your startup profile has been created. You can now manage your profile and receive investments.",
       });
-      navigate('/startup/dashboard');
+      // Force a hard navigation to ensure page reload with new auth state
+      window.location.href = '/startup/dashboard';
     },
     onError: (error) => {
       console.error('Create startup error:', error);

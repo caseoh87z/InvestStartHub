@@ -119,11 +119,10 @@ const StartupCard: React.FC<StartupCardProps> = ({
             ) : (
               <Button 
                 className="flex-1 flex items-center justify-center bg-primary hover:bg-blue-700"
-                asChild
+                onClick={() => window.location.href = '/auth/signin'}
               >
-                <Link href="/auth/signin">
-                  <a>View Details</a>
-                </Link>
+                <i className="fas fa-eye mr-2"></i>
+                View Details
               </Button>
             )}
             
