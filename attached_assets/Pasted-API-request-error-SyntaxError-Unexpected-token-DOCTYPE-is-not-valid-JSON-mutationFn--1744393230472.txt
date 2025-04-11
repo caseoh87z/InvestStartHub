@@ -1,0 +1,47 @@
+API request error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+mutationFn @ StartupCreate.tsx:100
+await in mutationFn
+fn @ @tanstack_react-query.js?v=2dbdac6f:1189
+run @ @tanstack_react-query.js?v=2dbdac6f:494
+start @ @tanstack_react-query.js?v=2dbdac6f:536
+execute @ @tanstack_react-query.js?v=2dbdac6f:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=2dbdac6f:2630
+handleSubmit @ StartupCreate.tsx:221
+callCallback2 @ chunk-WERSD76P.js?v=2dbdac6f:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=2dbdac6f:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=2dbdac6f:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=2dbdac6f:3736
+executeDispatch @ chunk-WERSD76P.js?v=2dbdac6f:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=2dbdac6f:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=2dbdac6f:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=2dbdac6f:7051
+(anonymous) @ chunk-WERSD76P.js?v=2dbdac6f:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=2dbdac6f:18913
+batchedUpdates @ chunk-WERSD76P.js?v=2dbdac6f:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=2dbdac6f:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=2dbdac6f:5478
+dispatchEvent @ chunk-WERSD76P.js?v=2dbdac6f:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=2dbdac6f:5449
+StartupCreate.tsx:113 Create startup error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+onError @ StartupCreate.tsx:113
+execute @ @tanstack_react-query.js?v=2dbdac6f:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=2dbdac6f:2630
+handleSubmit @ StartupCreate.tsx:221
+callCallback2 @ chunk-WERSD76P.js?v=2dbdac6f:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=2dbdac6f:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=2dbdac6f:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=2dbdac6f:3736
+executeDispatch @ chunk-WERSD76P.js?v=2dbdac6f:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=2dbdac6f:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=2dbdac6f:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=2dbdac6f:7051
+(anonymous) @ chunk-WERSD76P.js?v=2dbdac6f:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=2dbdac6f:18913
+batchedUpdates @ chunk-WERSD76P.js?v=2dbdac6f:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=2dbdac6f:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=2dbdac6f:5478
+dispatchEvent @ chunk-WERSD76P.js?v=2dbdac6f:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=2dbdac6f:5449
+StartupCreate.tsx:117 Error details: Unexpected token '<', "<!DOCTYPE "... is not valid JSON SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
