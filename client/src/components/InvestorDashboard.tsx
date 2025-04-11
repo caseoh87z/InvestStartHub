@@ -40,9 +40,9 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
   onChatWithFounder
 }) => {
   const [filters, setFilters] = useState({
-    industry: '',
-    stage: '',
-    location: '',
+    industry: ' ',
+    stage: ' ',
+    location: ' ',
     search: ''
   });
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
@@ -77,9 +77,9 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
 
   // Filter startups based on selected filters
   const filteredStartups = startups.filter(startup => {
-    if (filters.industry && startup.industry !== filters.industry) return false;
-    if (filters.stage && startup.stage !== filters.stage) return false;
-    if (filters.location && startup.location !== filters.location) return false;
+    if (filters.industry && filters.industry !== ' ' && startup.industry !== filters.industry) return false;
+    if (filters.stage && filters.stage !== ' ' && startup.stage !== filters.stage) return false;
+    if (filters.location && filters.location !== ' ' && startup.location !== filters.location) return false;
     if (filters.search && !startup.name.toLowerCase().includes(filters.search.toLowerCase()) && 
         !startup.description.toLowerCase().includes(filters.search.toLowerCase())) return false;
     return true;
@@ -133,7 +133,7 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                           <SelectValue placeholder="All Industries" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Industries</SelectItem>
+                          <SelectItem value=" ">All Industries</SelectItem>
                           {industries.map(industry => (
                             <SelectItem key={industry} value={industry}>{industry}</SelectItem>
                           ))}
@@ -150,7 +150,7 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                           <SelectValue placeholder="All Stages" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Stages</SelectItem>
+                          <SelectItem value=" ">All Stages</SelectItem>
                           {stages.map(stage => (
                             <SelectItem key={stage} value={stage}>{stage}</SelectItem>
                           ))}
@@ -161,7 +161,7 @@ const InvestorDashboard: React.FC<InvestorDashboardProps> = ({
                   <div className="flex items-end w-full sm:w-auto mt-4 sm:mt-0">
                     <Button 
                       className="w-full bg-accent hover:bg-purple-700"
-                      onClick={() => setFilters({ industry: '', stage: '', location: '', search: '' })}
+                      onClick={() => setFilters({ industry: ' ', stage: ' ', location: ' ', search: '' })}
                     >
                       <i className="fas fa-filter mr-2"></i>
                       Reset Filters

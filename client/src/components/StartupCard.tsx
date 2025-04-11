@@ -95,14 +95,20 @@ const StartupCard: React.FC<StartupCardProps> = ({
         <div className="mt-6 pt-6 border-t border-gray-200">
           <h4 className="text-sm font-medium text-gray-900">Documents</h4>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <a href="#" className="flex items-center px-3 py-2 text-xs text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+            <div 
+              className="flex items-center px-3 py-2 text-xs text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer"
+              onClick={() => onInvestClick && onInvestClick()}
+            >
               <i className="fas fa-file-pdf text-red-500 mr-2"></i>
               Pitch Deck
-            </a>
-            <a href="#" className="flex items-center px-3 py-2 text-xs text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+            </div>
+            <div 
+              className="flex items-center px-3 py-2 text-xs text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer"
+              onClick={() => onInvestClick && onInvestClick()}
+            >
               <i className="fas fa-file-excel text-green-500 mr-2"></i>
               Financials
-            </a>
+            </div>
           </div>
         </div>
 
