@@ -1,19 +1,15 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { 
-  insertUserSchema, 
-  insertStartupSchema, 
-  insertDocumentSchema, 
-  insertTransactionSchema, 
-  insertMessageSchema 
-} from "@shared/schema";
 import { ZodError } from "zod";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { authenticate } from "./auth";
 import { setupSocketIO } from "./socket";
-
-const JWT_SECRET = process.env.JWT_SECRET || "launchblocks_secret_key";
+import User from "./models/User";
+import Startup from "./models/Startup";
+import Transaction from "./models/Transaction";
+import Document from "./models/Document";
+import Message from "./models/Message";
+import { log } from "./vite";
+import mongoose from "mongoose";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -21,217 +17,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Socket.io with our custom manager
   setupSocketIO(httpServer);
   
-  // Authentication middleware
-  const authenticateUser = async (req: Request, res: Response, next: Function) => {
-    try {
-      const token = req.headers.authorization?.split(" ")[1];
-      if (!token) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
-      const user = await storage.getUser(decoded.id);
-      
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-      
-      req.body.authenticatedUser = user;
-      next();
-    } catch (error) {
-      console.error("Auth error:", error);
-      return res.status(401).json({ message: "Authentication failed" });
-    }
-  };
-  
-  // Auth routes
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { email, password, role } = insertUserSchema.parse(req.body);
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-      
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-      
-      // Create user
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        role,
-        walletAddress: req.body.walletAddress || null
-      });
-      
-      // Generate token
-      const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
-      
-      // Return user data (excluding password) and token
-      const { password: _, ...userData } = user;
-      res.status(201).json({ user: userData, token });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Failed to register user" });
-    }
-  });
-  
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      
-      // Find user
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // Generate token
-      const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
-      
-      // Return user data (excluding password) and token
-      const { password: _, ...userData } = user;
-      res.json({ user: userData, token });
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Failed to login" });
-    }
-  });
-  
-  app.post("/api/auth/verify-wallet", async (req, res) => {
-    try {
-      const { walletAddress, userId } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ message: "Wallet address is required" });
-      }
-      
-      // Check if wallet already exists
-      const existingUser = await storage.getUserByWalletAddress(walletAddress);
-      if (existingUser && existingUser.id !== userId) {
-        return res.status(400).json({ message: "Wallet address already in use" });
-      }
-      
-      // If userId provided, update the user
-      if (userId) {
-        const user = await storage.getUser(userId);
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-        
-        // Update user with wallet address
-        // In a real DB we would use an update query here
-        const updatedUser = await storage.createUser({
-          ...user,
-          walletAddress
-        });
-        
-        const { password: _, ...userData } = updatedUser;
-        return res.json({ user: userData });
-      }
-      
-      res.json({ verified: true });
-    } catch (error) {
-      console.error("Wallet verification error:", error);
-      res.status(500).json({ message: "Failed to verify wallet" });
-    }
-  });
-  
   // User routes
-  app.get("/api/users/me", authenticateUser, async (req, res) => {
-    const user = req.body.authenticatedUser;
-    const { password: _, ...userData } = user;
-    res.json(userData);
+  app.get("/api/users/me", authenticate, async (req: Request, res: Response) => {
+    res.json({ user: req.user });
   });
 
-  app.get("/api/users", authenticateUser, async (req, res) => {
+  app.get("/api/users", authenticate, async (req: Request, res: Response) => {
     try {
       // Get all users but remove sensitive information
-      const allUsers = await Promise.all((await storage.getAllUsers()).map(async (user) => {
-        const { password, ...userData } = user;
-        return userData;
-      }));
-      res.json(allUsers);
+      const users = await User.find().select('-password');
+      res.json(users);
     } catch (error) {
-      console.error("Get users error:", error);
+      log(`Get users error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get users" });
     }
   });
   
   // Startup routes
-  app.post("/api/startups", authenticateUser, async (req, res) => {
+  app.post("/api/startups", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
+      const user = req.user;
       
       if (user.role !== "founder") {
         return res.status(403).json({ message: "Only founders can create startups" });
       }
       
       // Check if user already has a startup
-      const existingStartup = await storage.getStartupByUserId(user.id);
+      const existingStartup = await Startup.findOne({ userId: user._id });
       if (existingStartup) {
         return res.status(400).json({ message: "You already have a startup" });
       }
       
-      const startupData = insertStartupSchema.parse({
+      const startupData = {
         ...req.body,
-        userId: user.id
-      });
+        userId: user._id
+      };
       
-      const startup = await storage.createStartup(startupData);
+      const startup = new Startup(startupData);
+      await startup.save();
+      
       res.status(201).json(startup);
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      console.error("Startup creation error:", error);
+      log(`Startup creation error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to create startup" });
     }
   });
   
-  app.get("/api/startups", async (req, res) => {
+  app.get("/api/startups", async (req: Request, res: Response) => {
     try {
-      const startups = await storage.getAllStartups();
-      
-      // If filters are applied
       const { industry, stage, location } = req.query;
       
-      let filteredStartups = startups;
+      let query: any = {};
       
       if (industry) {
-        filteredStartups = filteredStartups.filter(s => s.industry === industry);
+        query.industry = industry;
       }
       
       if (stage) {
-        filteredStartups = filteredStartups.filter(s => s.stage === stage);
+        query.stage = stage;
       }
       
       if (location) {
-        filteredStartups = filteredStartups.filter(s => s.location === location);
+        query.location = location;
       }
       
-      res.json(filteredStartups);
+      const startups = await Startup.find(query);
+      res.json(startups);
     } catch (error) {
-      console.error("Get startups error:", error);
+      log(`Get startups error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get startups" });
     }
   });
   
-  app.get("/api/startups/:id", async (req, res) => {
+  app.get("/api/startups/:id", async (req: Request, res: Response) => {
     try {
-      const startupId = parseInt(req.params.id);
-      const startup = await storage.getStartup(startupId);
+      const startupId = req.params.id;
+      
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
+      
+      const startup = await Startup.findById(startupId);
       
       if (!startup) {
         return res.status(404).json({ message: "Startup not found" });
@@ -239,37 +108,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(startup);
     } catch (error) {
-      console.error("Get startup error:", error);
+      log(`Get startup error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get startup" });
     }
   });
   
-  app.put("/api/startups/:id", authenticateUser, async (req, res) => {
+  app.put("/api/startups/:id", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
-      const startupId = parseInt(req.params.id);
-      const startup = await storage.getStartup(startupId);
+      const user = req.user;
+      const startupId = req.params.id;
+      
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
+      
+      const startup = await Startup.findById(startupId);
       
       if (!startup) {
         return res.status(404).json({ message: "Startup not found" });
       }
       
-      if (startup.userId !== user.id) {
+      // Check if the user is the owner of the startup
+      if (startup.userId.toString() !== user._id.toString()) {
         return res.status(403).json({ message: "You don't have permission to update this startup" });
       }
       
-      const updatedStartup = await storage.updateStartup(startupId, req.body);
-      res.json(updatedStartup);
+      // Update the startup
+      Object.assign(startup, req.body);
+      await startup.save();
+      
+      res.json(startup);
     } catch (error) {
-      console.error("Update startup error:", error);
+      log(`Update startup error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to update startup" });
     }
   });
   
-  app.get("/api/startups/user/:userId", async (req, res) => {
+  app.get("/api/startups/user/:userId", async (req: Request, res: Response) => {
     try {
-      const userId = parseInt(req.params.userId);
-      const startup = await storage.getStartupByUserId(userId);
+      const userId = req.params.userId;
+      
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const startup = await Startup.findOne({ userId });
       
       if (!startup) {
         return res.status(404).json({ message: "Startup not found" });
@@ -277,208 +160,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(startup);
     } catch (error) {
-      console.error("Get user startup error:", error);
+      log(`Get user startup error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get startup" });
     }
   });
   
   // Document routes
-  app.post("/api/documents", authenticateUser, async (req, res) => {
+  app.post("/api/documents", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
+      const user = req.user;
+      const { startupId } = req.body;
+      
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
       
       // Verify user owns the startup
-      const startup = await storage.getStartup(req.body.startupId);
-      if (!startup || startup.userId !== user.id) {
+      const startup = await Startup.findById(startupId);
+      if (!startup || startup.userId.toString() !== user._id.toString()) {
         return res.status(403).json({ message: "You don't have permission to add documents to this startup" });
       }
       
-      const documentData = insertDocumentSchema.parse(req.body);
-      const document = await storage.createDocument(documentData);
+      const document = new Document({
+        ...req.body,
+        startupId
+      });
       
+      await document.save();
       res.status(201).json(document);
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      console.error("Document creation error:", error);
+      log(`Document creation error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to create document" });
     }
   });
   
-  app.get("/api/documents/startup/:startupId", async (req, res) => {
+  app.get("/api/documents/startup/:startupId", async (req: Request, res: Response) => {
     try {
-      const startupId = parseInt(req.params.startupId);
-      const documents = await storage.getDocumentsByStartupId(startupId);
+      const startupId = req.params.startupId;
       
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
+      
+      const documents = await Document.find({ startupId });
       res.json(documents);
     } catch (error) {
-      console.error("Get documents error:", error);
+      log(`Get documents error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get documents" });
     }
   });
   
-  app.delete("/api/documents/:id", authenticateUser, async (req, res) => {
+  app.delete("/api/documents/:id", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
-      const documentId = parseInt(req.params.id);
+      const user = req.user;
+      const documentId = req.params.id;
       
-      const document = await storage.getDocument(documentId);
+      if (!mongoose.Types.ObjectId.isValid(documentId)) {
+        return res.status(400).json({ message: "Invalid document ID" });
+      }
+      
+      const document = await Document.findById(documentId);
       if (!document) {
         return res.status(404).json({ message: "Document not found" });
       }
       
       // Verify user owns the startup
-      const startup = await storage.getStartup(document.startupId);
-      if (!startup || startup.userId !== user.id) {
+      const startup = await Startup.findById(document.startupId);
+      if (!startup || startup.userId.toString() !== user._id.toString()) {
         return res.status(403).json({ message: "You don't have permission to delete this document" });
       }
       
-      const result = await storage.deleteDocument(documentId);
-      if (result) {
-        res.json({ success: true });
-      } else {
-        res.status(500).json({ message: "Failed to delete document" });
-      }
+      await Document.findByIdAndDelete(documentId);
+      res.json({ success: true });
     } catch (error) {
-      console.error("Delete document error:", error);
+      log(`Delete document error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to delete document" });
     }
   });
   
   // Transaction routes
-  app.post("/api/transactions", authenticateUser, async (req, res) => {
+  app.post("/api/transactions", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
+      const user = req.user;
       
       if (user.role !== "investor") {
         return res.status(403).json({ message: "Only investors can create transactions" });
       }
       
-      const transactionData = insertTransactionSchema.parse({
+      const transaction = new Transaction({
         ...req.body,
-        investorId: user.id,
+        investorId: user._id,
         status: "pending" // Always start as pending
       });
       
-      const transaction = await storage.createTransaction(transactionData);
+      await transaction.save();
       res.status(201).json(transaction);
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
-      console.error("Transaction creation error:", error);
+      log(`Transaction creation error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to create transaction" });
     }
   });
   
-  app.put("/api/transactions/:id/status", authenticateUser, async (req, res) => {
+  app.put("/api/transactions/:id/status", authenticate, async (req: Request, res: Response) => {
     try {
-      const transactionId = parseInt(req.params.id);
+      const transactionId = req.params.id;
       const { status } = req.body;
       
-      if (!['pending', 'completed', 'failed'].includes(status)) {
+      if (!mongoose.Types.ObjectId.isValid(transactionId)) {
+        return res.status(400).json({ message: "Invalid transaction ID" });
+      }
+      
+      if (!['pending', 'completed', 'active', 'cancelled'].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
       
-      const updatedTransaction = await storage.updateTransactionStatus(transactionId, status);
+      const transaction = await Transaction.findByIdAndUpdate(
+        transactionId,
+        { status },
+        { new: true }
+      );
       
-      if (!updatedTransaction) {
+      if (!transaction) {
         return res.status(404).json({ message: "Transaction not found" });
       }
       
-      res.json(updatedTransaction);
+      res.json(transaction);
     } catch (error) {
-      console.error("Update transaction error:", error);
+      log(`Update transaction error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to update transaction" });
     }
   });
   
-  app.get("/api/transactions/startup/:startupId", authenticateUser, async (req, res) => {
+  app.get("/api/transactions/startup/:startupId", authenticate, async (req: Request, res: Response) => {
     try {
-      const startupId = parseInt(req.params.startupId);
-      const user = req.body.authenticatedUser;
+      const startupId = req.params.startupId;
+      const user = req.user;
+      
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
       
       // Get the startup
-      const startup = await storage.getStartup(startupId);
+      const startup = await Startup.findById(startupId);
       if (!startup) {
         return res.status(404).json({ message: "Startup not found" });
       }
       
       // Only allow founders to see their own startup transactions
-      if (user.role === "founder" && startup.userId !== user.id) {
+      if (user.role === "founder" && startup.userId.toString() !== user._id.toString()) {
         return res.status(403).json({ message: "You don't have permission to view these transactions" });
       }
       
-      const transactions = await storage.getTransactionsByStartupId(startupId);
+      const transactions = await Transaction.find({ startupId });
       res.json(transactions);
     } catch (error) {
-      console.error("Get startup transactions error:", error);
+      log(`Get startup transactions error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get transactions" });
     }
   });
   
-  app.get("/api/transactions/investor", authenticateUser, async (req, res) => {
+  app.get("/api/transactions/investor", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
+      const user = req.user;
       
       if (user.role !== "investor") {
         return res.status(403).json({ message: "Only investors can access their transactions" });
       }
       
-      const transactions = await storage.getTransactionsByInvestorId(user.id);
+      const transactions = await Transaction.find({ investorId: user._id });
       res.json(transactions);
     } catch (error) {
-      console.error("Get investor transactions error:", error);
+      log(`Get investor transactions error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get transactions" });
     }
   });
   
   // Message routes
-  app.get("/api/messages/:userId", authenticateUser, async (req, res) => {
+  app.get("/api/messages/:userId", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
-      const otherUserId = parseInt(req.params.userId);
+      const user = req.user;
+      const otherUserId = req.params.userId;
       
-      const messages = await storage.getMessagesBetweenUsers(user.id, otherUserId);
+      if (!mongoose.Types.ObjectId.isValid(otherUserId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const messages = await Message.find({
+        $or: [
+          { senderId: user._id, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: user._id }
+        ]
+      }).sort({ createdAt: 1 });
+      
       res.json(messages);
     } catch (error) {
-      console.error("Get messages error:", error);
+      log(`Get messages error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get messages" });
     }
   });
   
-  app.get("/api/messages/unread/count", authenticateUser, async (req, res) => {
+  app.get("/api/messages/unread/count", authenticate, async (req: Request, res: Response) => {
     try {
-      const user = req.body.authenticatedUser;
-      const unreadMessages = await storage.getUnreadMessagesByUserId(user.id);
+      const user = req.user;
+      const unreadMessages = await Message.countDocuments({
+        receiverId: user._id,
+        read: false
+      });
       
-      res.json({ count: unreadMessages.length });
+      res.json({ count: unreadMessages });
     } catch (error) {
-      console.error("Get unread messages error:", error);
+      log(`Get unread messages error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to get unread messages" });
     }
   });
   
-  app.put("/api/messages/:id/read", authenticateUser, async (req, res) => {
+  app.put("/api/messages/:id/read", authenticate, async (req: Request, res: Response) => {
     try {
-      const messageId = parseInt(req.params.id);
-      const user = req.body.authenticatedUser;
+      const messageId = req.params.id;
+      const user = req.user;
       
-      const message = await storage.getMessage(messageId);
+      if (!mongoose.Types.ObjectId.isValid(messageId)) {
+        return res.status(400).json({ message: "Invalid message ID" });
+      }
+      
+      const message = await Message.findById(messageId);
       if (!message) {
         return res.status(404).json({ message: "Message not found" });
       }
       
       // Only recipient can mark message as read
-      if (message.receiverId !== user.id) {
-        return res.status(403).json({ message: "You don't have permission to update this message" });
+      if (message.receiverId.toString() !== user._id.toString()) {
+        return res.status(403).json({ message: "You don't have permission to mark this message as read" });
       }
       
-      const updatedMessage = await storage.markMessageAsRead(messageId);
-      res.json(updatedMessage);
+      message.read = true;
+      await message.save();
+      
+      res.json(message);
     } catch (error) {
-      console.error("Mark message as read error:", error);
+      log(`Mark message as read error: ${error}`, 'api');
       res.status(500).json({ message: "Failed to mark message as read" });
     }
   });

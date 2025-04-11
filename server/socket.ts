@@ -1,12 +1,12 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { storage } from './storage';
-import { Message, InsertMessage } from '@shared/schema';
+import Message from './models/Message';
+import { log } from './vite';
 
 let io: Server;
 
 // Map to store active users
-const activeUsers = new Map<number, string>();
+const activeUsers = new Map<string, string>();
 
 export function setupSocketIO(httpServer: HttpServer) {
   io = new Server(httpServer, {
@@ -17,37 +17,38 @@ export function setupSocketIO(httpServer: HttpServer) {
   });
 
   io.on('connection', (socket: Socket) => {
-    console.log('User connected to socket:', socket.id);
+    log(`User connected to socket: ${socket.id}`, 'socket');
     
     // Get user ID from query
     const userId = socket.handshake.query.userId;
     if (userId) {
-      const userIdInt = parseInt(userId as string);
-      activeUsers.set(userIdInt, socket.id);
-      console.log(`User ${userIdInt} is now active with socket ${socket.id}`);
+      activeUsers.set(userId as string, socket.id);
+      log(`User ${userId} is now active with socket ${socket.id}`, 'socket');
     }
 
     // Join a room for direct messages
     socket.on('join', (room: string) => {
       socket.join(room);
-      console.log(`Socket ${socket.id} joined room ${room}`);
+      log(`Socket ${socket.id} joined room ${room}`, 'socket');
     });
 
     // Handle sending a message
     socket.on('send_message', async (messageData: { 
-      senderId: number; 
-      receiverId: number; 
+      senderId: string; 
+      receiverId: string; 
       content: string;
     }) => {
       try {
-        // Create message in database
-        const newMessageData: InsertMessage = {
+        // Create new message document
+        const newMessage = new Message({
           senderId: messageData.senderId,
           receiverId: messageData.receiverId,
           content: messageData.content,
-        };
+          read: false
+        });
         
-        const newMessage = await storage.createMessage(newMessageData);
+        // Save to database
+        await newMessage.save();
         
         // Emit to sender
         socket.emit('message_sent', newMessage);
@@ -58,20 +59,22 @@ export function setupSocketIO(httpServer: HttpServer) {
           io.to(receiverSocketId).emit('receive_message', newMessage);
         }
       } catch (error) {
-        console.error('Error sending message:', error);
+        log(`Error sending message: ${error}`, 'socket');
       }
     });
 
     // Handle reading messages
-    socket.on('read_messages', async (data: { userId: number; contactId: number }) => {
+    socket.on('read_messages', async (data: { userId: string; contactId: string }) => {
       try {
         // Update messages as read in database
-        const messages = await storage.getMessagesBetweenUsers(data.userId, data.contactId);
-        for (const message of messages) {
-          if (message.receiverId === data.userId && !message.read) {
-            await storage.markMessageAsRead(message.id);
-          }
-        }
+        await Message.updateMany(
+          { 
+            senderId: data.contactId, 
+            receiverId: data.userId,
+            read: false
+          },
+          { read: true }
+        );
         
         // Notify sender that messages were read
         const senderSocketId = activeUsers.get(data.contactId);
@@ -82,7 +85,7 @@ export function setupSocketIO(httpServer: HttpServer) {
           });
         }
       } catch (error) {
-        console.error('Error marking messages as read:', error);
+        log(`Error marking messages as read: ${error}`, 'socket');
       }
     });
 
@@ -92,7 +95,7 @@ export function setupSocketIO(httpServer: HttpServer) {
       activeUsers.forEach((socketId, userId) => {
         if (socketId === socket.id) {
           activeUsers.delete(userId);
-          console.log(`User ${userId} disconnected`);
+          log(`User ${userId} disconnected`, 'socket');
         }
       });
     });

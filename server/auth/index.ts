@@ -87,7 +87,7 @@ export const registerAuthRoutes = (app: Express) => {
   // Register user
   app.post('/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const { email, password, role, walletAddress } = req.body;
+      const { email, password: userPassword, role, walletAddress } = req.body;
       
       // Check if user already exists
       const existingUser = await User.findOne({ email });
@@ -99,7 +99,7 @@ export const registerAuthRoutes = (app: Express) => {
       // Create new user
       const user = new User({
         email,
-        password,
+        password: userPassword,
         role,
         walletAddress
       });
@@ -111,7 +111,7 @@ export const registerAuthRoutes = (app: Express) => {
       
       // Return user data without password
       const userData = user.toObject();
-      const { password, ...userWithoutPassword } = userData;
+      const { password: pwd, ...userWithoutPassword } = userData;
       
       res.status(201).json({
         user: userWithoutPassword,
@@ -126,7 +126,7 @@ export const registerAuthRoutes = (app: Express) => {
   // Login user
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
+      const { email, password: userPassword } = req.body;
       
       // Find user by email
       const user = await User.findOne({ email });
@@ -136,7 +136,7 @@ export const registerAuthRoutes = (app: Express) => {
       }
       
       // Check password
-      const isMatch = await user.comparePassword(password);
+      const isMatch = await user.comparePassword(userPassword);
       
       if (!isMatch) {
         return res.status(400).json({ message: 'Invalid credentials' });
@@ -147,7 +147,7 @@ export const registerAuthRoutes = (app: Express) => {
       
       // Return user data without password
       const userData = user.toObject();
-      const { password, ...userWithoutPassword } = userData;
+      const { password: pwd, ...userWithoutPassword } = userData;
       
       res.status(200).json({
         user: userWithoutPassword,
