@@ -7,15 +7,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { sendTransaction, isMetaMaskInstalled } from '@/lib/web3';
+import { 
+  sendTransaction, 
+  isMetaMaskInstalled, 
+  createInvestment 
+} from '@/lib/web3';
 import { apiRequest } from '@/lib/queryClient';
 import { formatCurrency } from '@/lib/utils';
+import { PlusCircle, MinusCircle, CheckCircle } from 'lucide-react';
+
+interface Milestone {
+  description: string;
+  amount: string;
+}
 
 interface InvestmentModalProps {
   open: boolean;
@@ -36,11 +48,15 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
   startup,
   onSuccess
 }) => {
+  const [investmentType, setInvestmentType] = useState<'direct' | 'milestone'>('direct');
   const [paymentMethod, setPaymentMethod] = useState<'metamask' | 'upi'>('metamask');
   const [amount, setAmount] = useState<string>('');
   const [transactionId, setTransactionId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [metaMaskAvailable, setMetaMaskAvailable] = useState<boolean>(true);
+  const [milestones, setMilestones] = useState<Milestone[]>([
+    { description: "Initial funding", amount: "" }
+  ]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,8 +69,38 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
       setAmount('');
       setTransactionId('');
       setPaymentMethod('metamask');
+      setInvestmentType('direct');
+      setMilestones([{ description: "Initial funding", amount: "" }]);
     }
   }, [open]);
+
+  // Handle milestone input changes
+  const handleMilestoneChange = (index: number, field: keyof Milestone, value: string) => {
+    const updatedMilestones = [...milestones];
+    updatedMilestones[index] = {
+      ...updatedMilestones[index],
+      [field]: value
+    };
+    setMilestones(updatedMilestones);
+  };
+
+  // Add a new milestone
+  const addMilestone = () => {
+    setMilestones([...milestones, { description: "", amount: "" }]);
+  };
+
+  // Remove a milestone
+  const removeMilestone = (index: number) => {
+    if (milestones.length <= 1) return;
+    const updatedMilestones = milestones.filter((_, i) => i !== index);
+    setMilestones(updatedMilestones);
+  };
+
+  // Calculate total milestone amount
+  const totalMilestoneAmount = milestones.reduce((sum, milestone) => {
+    const amount = parseFloat(milestone.amount) || 0;
+    return sum + amount;
+  }, 0);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow numbers and decimals
@@ -65,91 +111,170 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
   const handleConfirm = async () => {
     if (!startup) return;
     
-    // Validate amount
-    const amountNum = parseFloat(amount);
-    if (!amount || isNaN(amountNum) || amountNum <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Please enter a valid investment amount.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Handle payment based on selected method
-      if (paymentMethod === 'metamask') {
-        if (!startup.walletAddress) {
-          toast({
-            title: "Error",
-            description: "This startup hasn't set up a wallet address yet.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        
-        // Ethereum transaction
-        const txHash = await sendTransaction(startup.walletAddress, amount);
-        
-        // Record transaction in backend
-        await apiRequest('POST', '/api/transactions', {
-          startupId: startup.id,
-          amount: Math.floor(amountNum * 100), // Convert to cents
-          method: 'metamask',
-          transactionId: txHash,
-          status: 'completed'
-        });
-        
+    if (investmentType === 'direct') {
+      // Validate amount for direct investment
+      const amountNum = parseFloat(amount);
+      if (!amount || isNaN(amountNum) || amountNum <= 0) {
         toast({
-          title: "Investment successful!",
-          description: `You have successfully invested ${formatCurrency(amountNum)} in ${startup.name}.`,
-          variant: "default",
+          title: "Invalid amount",
+          description: "Please enter a valid investment amount.",
+          variant: "destructive",
         });
-        
-        onSuccess();
-        onClose();
-      } else {
-        // UPI transaction
-        if (!transactionId) {
-          toast({
-            title: "Transaction ID required",
-            description: "Please enter the transaction ID from your UPI payment.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        
-        // Record transaction in backend
-        await apiRequest('POST', '/api/transactions', {
-          startupId: startup.id,
-          amount: Math.floor(amountNum * 100), // Convert to cents
-          method: 'upi',
-          transactionId: transactionId,
-          status: 'pending' // UPI transactions need verification
-        });
-        
-        toast({
-          title: "Investment recorded",
-          description: `Your investment of ${formatCurrency(amountNum)} in ${startup.name} has been recorded and is pending verification.`,
-          variant: "default",
-        });
-        
-        onSuccess();
-        onClose();
+        return;
       }
-    } catch (error) {
-      console.error('Investment error:', error);
-      toast({
-        title: "Investment failed",
-        description: "There was an error processing your investment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      
+      setIsLoading(true);
+      
+      try {
+        // Handle payment based on selected method
+        if (paymentMethod === 'metamask') {
+          if (!startup.walletAddress) {
+            toast({
+              title: "Error",
+              description: "This startup hasn't set up a wallet address yet.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
+          
+          // Ethereum transaction
+          const txHash = await sendTransaction(startup.walletAddress, amount);
+          
+          // Record transaction in backend
+          await apiRequest('POST', '/api/transactions', {
+            startupId: startup.id,
+            amount: Math.floor(amountNum * 100), // Convert to cents
+            method: 'metamask',
+            transactionId: txHash,
+            status: 'completed'
+          });
+          
+          toast({
+            title: "Investment successful!",
+            description: `You have successfully invested ${formatCurrency(amountNum)} in ${startup.name}.`,
+            variant: "default",
+          });
+          
+          onSuccess();
+          onClose();
+        } else {
+          // UPI transaction
+          if (!transactionId) {
+            toast({
+              title: "Transaction ID required",
+              description: "Please enter the transaction ID from your UPI payment.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
+          
+          // Record transaction in backend
+          await apiRequest('POST', '/api/transactions', {
+            startupId: startup.id,
+            amount: Math.floor(amountNum * 100), // Convert to cents
+            method: 'upi',
+            transactionId: transactionId,
+            status: 'pending' // UPI transactions need verification
+          });
+          
+          toast({
+            title: "Investment recorded",
+            description: `Your investment of ${formatCurrency(amountNum)} in ${startup.name} has been recorded and is pending verification.`,
+            variant: "default",
+          });
+          
+          onSuccess();
+          onClose();
+        }
+      } catch (error) {
+        console.error('Investment error:', error);
+        toast({
+          title: "Investment failed",
+          description: "There was an error processing your investment. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Milestone-based investment (only available with MetaMask)
+      
+      // Validate milestones
+      const invalidMilestones = milestones.filter(
+        m => !m.description || !m.amount || isNaN(parseFloat(m.amount)) || parseFloat(m.amount) <= 0
+      );
+      
+      if (invalidMilestones.length > 0) {
+        toast({
+          title: "Invalid milestones",
+          description: "Please make sure all milestones have a description and valid amount.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (totalMilestoneAmount <= 0) {
+        toast({
+          title: "Invalid total amount",
+          description: "Total investment amount must be greater than zero.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!startup.walletAddress) {
+        toast({
+          title: "Error",
+          description: "This startup hasn't set up a wallet address yet.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      try {
+        // Prepare milestone data for smart contract
+        const milestoneDescriptions = milestones.map(m => m.description);
+        const milestoneAmounts = milestones.map(m => m.amount);
+        
+        // Create milestone-based investment via smart contract
+        const txHash = await createInvestment(
+          startup.walletAddress,
+          milestoneDescriptions,
+          milestoneAmounts,
+          totalMilestoneAmount.toString()
+        );
+        
+        // Record transaction in backend
+        await apiRequest('POST', '/api/transactions', {
+          startupId: startup.id,
+          amount: Math.floor(totalMilestoneAmount * 100), // Convert to cents
+          method: 'smart_contract',
+          transactionId: txHash,
+          status: 'active' // Smart contract transactions start as active
+        });
+        
+        toast({
+          title: "Milestone investment created!",
+          description: `You have successfully created a milestone-based investment of ${formatCurrency(totalMilestoneAmount)} in ${startup.name}.`,
+          variant: "default",
+        });
+        
+        onSuccess();
+        onClose();
+      } catch (error) {
+        console.error('Milestone investment error:', error);
+        toast({
+          title: "Investment failed",
+          description: "There was an error processing your milestone-based investment. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -166,58 +291,166 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
         </DialogHeader>
         
         <div className="py-4">
-          <div className="space-y-4">
-            <RadioGroup 
-              value={paymentMethod} 
-              onValueChange={(value) => setPaymentMethod(value as 'metamask' | 'upi')}
-              className="flex flex-col space-y-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem 
-                  value="metamask" 
-                  id="metamask" 
-                  disabled={!metaMaskAvailable} 
-                />
-                <Label htmlFor="metamask" className="flex items-center text-sm font-medium text-gray-700">
-                  <i className="fab fa-ethereum text-purple-600 mr-2 text-lg"></i>
-                  MetaMask (Crypto)
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="upi" id="upi" disabled={!startup.upiId} />
-                <Label htmlFor="upi" className="flex items-center text-sm font-medium text-gray-700">
-                  <i className="fas fa-money-bill-wave text-green-600 mr-2 text-lg"></i>
-                  UPI (Fiat)
-                </Label>
-              </div>
-            </RadioGroup>
-            
+          <div className="space-y-6">
+            {/* Investment Type */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Investment Amount</Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">$</span>
+              <Label>Investment Type</Label>
+              <Tabs 
+                defaultValue="direct" 
+                value={investmentType}
+                onValueChange={(value) => setInvestmentType(value as 'direct' | 'milestone')}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="direct">Direct Investment</TabsTrigger>
+                  <TabsTrigger value="milestone" disabled={paymentMethod === 'upi'}>Milestone-Based</TabsTrigger>
+                </TabsList>
+                <TabsContent value="direct">
+                  <p className="text-sm text-gray-500 mt-2">
+                    Send a one-time investment directly to the startup.
+                  </p>
+                </TabsContent>
+                <TabsContent value="milestone">
+                  <p className="text-sm text-gray-500 mt-2">
+                    Release funds gradually as the startup achieves agreed-upon milestones.
+                    Only available with MetaMask.
+                  </p>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label>Payment Method</Label>
+              <RadioGroup 
+                value={paymentMethod} 
+                onValueChange={(value) => {
+                  setPaymentMethod(value as 'metamask' | 'upi');
+                  if (value === 'upi' && investmentType === 'milestone') {
+                    setInvestmentType('direct');
+                  }
+                }}
+                className="flex flex-col space-y-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem 
+                    value="metamask" 
+                    id="metamask" 
+                    disabled={!metaMaskAvailable} 
+                  />
+                  <Label htmlFor="metamask" className="flex items-center text-sm font-medium text-gray-700">
+                    <i className="fab fa-ethereum text-purple-600 mr-2 text-lg"></i>
+                    MetaMask (Crypto)
+                  </Label>
                 </div>
-                <Input
-                  id="amount"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  placeholder="0.00"
-                  className="pl-7 pr-12"
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">USD</span>
+                
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="upi" id="upi" disabled={!startup.upiId} />
+                  <Label htmlFor="upi" className="flex items-center text-sm font-medium text-gray-700">
+                    <i className="fas fa-money-bill-wave text-green-600 mr-2 text-lg"></i>
+                    UPI (Fiat)
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {/* Investment Amount or Milestones */}
+            {investmentType === 'direct' ? (
+              <div className="space-y-2">
+                <Label htmlFor="amount">Investment Amount</Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">$</span>
+                  </div>
+                  <Input
+                    id="amount"
+                    value={amount}
+                    onChange={handleAmountChange}
+                    placeholder="0.00"
+                    className="pl-7 pr-12"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">USD</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label>Milestones</Label>
+                  <span className="text-sm text-gray-500">
+                    Total: ${totalMilestoneAmount.toFixed(2)}
+                  </span>
+                </div>
+                
+                {milestones.map((milestone, index) => (
+                  <div key={index} className="space-y-2 p-3 border rounded-md relative">
+                    <div className="flex justify-between">
+                      <h4 className="text-sm font-medium">Milestone {index + 1}</h4>
+                      {milestones.length > 1 && (
+                        <Button
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => removeMilestone(index)}
+                          className="h-5 w-5 absolute right-2 top-2"
+                        >
+                          <MinusCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor={`milestone-${index}-desc`}>Description</Label>
+                        <Input
+                          id={`milestone-${index}-desc`}
+                          value={milestone.description}
+                          onChange={(e) => handleMilestoneChange(index, 'description', e.target.value)}
+                          placeholder="Describe the milestone"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`milestone-${index}-amount`}>Amount</Label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">$</span>
+                          </div>
+                          <Input
+                            id={`milestone-${index}-amount`}
+                            value={milestone.amount}
+                            onChange={(e) => handleMilestoneChange(
+                              index, 
+                              'amount', 
+                              e.target.value.replace(/[^0-9.]/g, '')
+                            )}
+                            placeholder="0.00"
+                            className="pl-7"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addMilestone}
+                  className="w-full"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Milestone
+                </Button>
+              </div>
+            )}
             
             {paymentMethod === 'metamask' && (
               <div>
                 <p className="text-sm text-gray-500 mb-4">
                   Make sure your MetaMask wallet is connected to proceed with the crypto transaction.
                 </p>
-                <Alert variant="warning">
+                <Alert>
                   <AlertDescription>
                     You'll be asked to confirm this transaction in your MetaMask wallet. Gas fees will apply.
                   </AlertDescription>
