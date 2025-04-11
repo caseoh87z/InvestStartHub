@@ -19,7 +19,8 @@ const UserSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    minlength: 6
   },
   role: {
     type: String,
@@ -28,29 +29,42 @@ const UserSchema = new Schema<IUser>({
   },
   walletAddress: {
     type: String,
-    sparse: true,
-    trim: true
+    trim: true,
+    sparse: true
   }
-}, { 
-  timestamps: true 
-});
+}, { timestamps: true });
 
-// Hash password before saving
+// Pre-save hook to hash password
 UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-
+  const user = this;
+  
+  // Only hash the password if it's modified or new
+  if (!user.isModified('password')) return next();
+  
   try {
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    user.password = await bcrypt.hash(user.password, salt);
     next();
   } catch (error: any) {
     next(error);
   }
 });
 
-// Method to compare password
+// Method to compare passwords for login
 UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    return false;
+  }
 };
 
-export default mongoose.model<IUser>('User', UserSchema);
+// Make sure email is unique
+UserSchema.path('email').validate(async function(email: string) {
+  const count = await mongoose.models.User.countDocuments({ email });
+  return !count;
+}, 'Email already exists');
+
+const User = mongoose.model<IUser>('User', UserSchema);
+
+export default User;
