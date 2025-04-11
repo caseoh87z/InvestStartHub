@@ -1,5 +1,15 @@
-import mongoose, { Document as IDocument, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 import { IStartup } from './Startup';
+
+export interface IDocument extends Document {
+  startupId: mongoose.Types.ObjectId | IStartup;
+  name: string;
+  type: string;
+  fileUrl: string;
+  size: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface IStartupDocument extends IDocument {
   startupId: mongoose.Types.ObjectId | IStartup;
@@ -9,7 +19,7 @@ export interface IStartupDocument extends IDocument {
   size: number;
 }
 
-const DocumentSchema = new Schema<IStartupDocument>({
+const DocumentSchema = new Schema<IDocument>({
   startupId: {
     type: Schema.Types.ObjectId,
     ref: 'Startup',
@@ -17,8 +27,7 @@ const DocumentSchema = new Schema<IStartupDocument>({
   },
   name: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
   type: {
     type: String,
@@ -32,8 +41,8 @@ const DocumentSchema = new Schema<IStartupDocument>({
     type: Number,
     required: true
   }
-}, {
-  timestamps: true
-});
+}, { timestamps: true });
 
-export default mongoose.model<IStartupDocument>('Document', DocumentSchema);
+const StartupDocument = mongoose.model<IDocument>('Document', DocumentSchema);
+
+export default StartupDocument;

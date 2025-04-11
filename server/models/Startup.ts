@@ -37,7 +37,8 @@ const StartupSchema = new Schema<IStartup>({
   },
   stage: {
     type: String,
-    required: true
+    required: true,
+    enum: ['Idea', 'Prototype', 'MVP', 'Growth', 'Scale']
   },
   industry: {
     type: String,
@@ -66,8 +67,22 @@ const StartupSchema = new Schema<IStartup>({
     type: Number,
     default: 0
   }
-}, {
-  timestamps: true
+}, { timestamps: true });
+
+// Validate that founder has only one startup
+StartupSchema.pre('save', async function(next) {
+  // Only check on new startup creation
+  if (!this.isNew) return next();
+  
+  const count = await mongoose.models.Startup.countDocuments({ userId: this.userId });
+  if (count > 0) {
+    const error = new Error('User already has a startup registered');
+    return next(error);
+  }
+  
+  next();
 });
 
-export default mongoose.model<IStartup>('Startup', StartupSchema);
+const Startup = mongoose.model<IStartup>('Startup', StartupSchema);
+
+export default Startup;

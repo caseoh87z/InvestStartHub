@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { setupVite, serveStatic, log } from "./vite";
 import mongoose from 'mongoose';
+import authRoutes from './routes/auth';
 
 const app = express();
 app.use(express.json());
@@ -11,6 +12,9 @@ app.use(express.urlencoded({ extended: false }));
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is running' });
 });
+
+// API Routes
+app.use('/api/auth', authRoutes);
 
 // Connect to MongoDB
 const connectDB = async (): Promise<boolean> => {

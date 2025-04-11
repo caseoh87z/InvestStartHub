@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { IStartup } from './Startup';
 import { IUser } from './User';
+import { IStartup } from './Startup';
 
 export interface ITransaction extends Document {
   startupId: mongoose.Types.ObjectId | IStartup;
@@ -9,6 +9,8 @@ export interface ITransaction extends Document {
   method: 'metamask' | 'upi' | 'smart_contract';
   transactionId?: string;
   status: 'pending' | 'completed' | 'active' | 'cancelled';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const TransactionSchema = new Schema<ITransaction>({
@@ -24,7 +26,8 @@ const TransactionSchema = new Schema<ITransaction>({
   },
   amount: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   method: {
     type: String,
@@ -37,10 +40,41 @@ const TransactionSchema = new Schema<ITransaction>({
   status: {
     type: String,
     enum: ['pending', 'completed', 'active', 'cancelled'],
-    required: true
+    default: 'pending'
   }
-}, {
-  timestamps: true
+}, { timestamps: true });
+
+// Update startup stats when transaction is completed
+TransactionSchema.post('save', async function(doc) {
+  if (doc.status === 'completed') {
+    try {
+      const Startup = mongoose.model('Startup');
+      const startup = await Startup.findById(doc.startupId);
+      
+      if (startup) {
+        // Update total raised amount
+        startup.totalRaised = startup.totalRaised + doc.amount;
+        
+        // Check if this is a new investor
+        const isNewInvestor = await mongoose.model('Transaction').countDocuments({
+          startupId: doc.startupId,
+          investorId: doc.investorId,
+          status: 'completed',
+          _id: { $ne: doc._id }
+        }) === 0;
+        
+        if (isNewInvestor) {
+          startup.totalInvestors = startup.totalInvestors + 1;
+        }
+        
+        await startup.save();
+      }
+    } catch (error) {
+      console.error('Error updating startup stats:', error);
+    }
+  }
 });
 
-export default mongoose.model<ITransaction>('Transaction', TransactionSchema);
+const Transaction = mongoose.model<ITransaction>('Transaction', TransactionSchema);
+
+export default Transaction;
