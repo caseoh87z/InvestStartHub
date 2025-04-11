@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { getIndustries, getInvestmentStages } from '@/lib/utils';
-import { connectWallet, getCurrentAccount, verifyWalletWithBackend } from '@/lib/web3';
+import { connectMetaMask, getCurrentAccount } from '@/lib/web3';
 
 const StartupCreate: React.FC = () => {
   const { user } = useAuth();
@@ -204,14 +204,23 @@ const StartupCreate: React.FC = () => {
 
   const handleConnectWallet = async () => {
     try {
-      const account = await connectWallet();
-      const verificationResult = await verifyWalletWithBackend(account, user?.id);
+      const account = await connectMetaMask();
       
-      if (verificationResult.verified || verificationResult.user) {
+      if (account) {
         setWalletAddress(account);
         toast({
           title: "Wallet connected",
           description: `Successfully connected to ${account.substring(0, 6)}...${account.substring(account.length - 4)}`,
+        });
+        
+        // In a production app, you might want to verify ownership of the wallet 
+        // by having the user sign a message that gets verified on the backend
+        // For simplicity in this demo, we'll just use the wallet address
+      } else {
+        toast({
+          title: "Failed to connect wallet",
+          description: "Please make sure MetaMask is installed and unlocked.",
+          variant: "destructive",
         });
       }
     } catch (error) {

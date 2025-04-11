@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/context/AuthContext';
 import { login, register } from '@/lib/auth';
-import { connectWallet } from '@/lib/web3';
+import { connectMetaMask } from '@/lib/web3';
 
 const AuthPage: React.FC = () => {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -27,7 +27,7 @@ const AuthPage: React.FC = () => {
 
   const handleConnectWallet = async () => {
     try {
-      const address = await connectWallet();
+      const address = await connectMetaMask();
       setWalletAddress(address);
       toast({
         title: "Wallet connected",

@@ -11,6 +11,7 @@ import StartupProfile from "@/pages/StartupProfile";
 import StartupCreate from "@/pages/StartupCreate";
 import StartupTransactions from "@/pages/StartupTransactions";
 import InvestorTransactions from "@/pages/InvestorTransactions";
+import StartupDetailsPage from "@/pages/StartupDetailsPage";
 import Messages from "@/pages/Messages";
 import { useAuth } from "./lib/context/AuthContext";
 import { useEffect } from "react";
@@ -61,6 +62,7 @@ function Router() {
       {/* Investor routes */}
       <ProtectedRoute path="/investor/dashboard" component={InvestorDashboardPage} />
       <ProtectedRoute path="/investor/transactions" component={InvestorTransactions} />
+      <ProtectedRoute path="/startup/details/:id" component={StartupDetailsPage} />
       
       {/* Shared routes */}
       <ProtectedRoute path="/messages/:userId?" component={Messages} />

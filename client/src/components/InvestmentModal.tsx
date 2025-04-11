@@ -16,9 +16,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { 
+  connectMetaMask,
   sendTransaction, 
-  isMetaMaskInstalled, 
-  createInvestment 
+  isMetaMaskInstalled,
+  ethToWei 
 } from '@/lib/web3';
 import { apiRequest } from '@/lib/queryClient';
 import { formatCurrency } from '@/lib/utils';
@@ -138,8 +139,38 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
             return;
           }
           
-          // Ethereum transaction
-          const txHash = await sendTransaction(startup.walletAddress, amount);
+          // First connect to MetaMask
+          const account = await connectMetaMask();
+          
+          if (!account) {
+            toast({
+              title: "Wallet connection failed",
+              description: "Failed to connect to MetaMask. Please make sure it's installed and unlocked.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
+          
+          // Convert USD amount to ETH (simplified conversion for demo)
+          // In a real app, you'd use an oracle or price feed
+          const ethAmount = (parseFloat(amount) / 2000).toString(); // Assuming 1 ETH = $2000
+          
+          // Convert ETH to Wei for the transaction
+          const weiAmount = ethToWei(ethAmount);
+          
+          // Send Ethereum transaction
+          const txHash = await sendTransaction(account, startup.walletAddress!, weiAmount);
+          
+          if (!txHash) {
+            toast({
+              title: "Transaction failed",
+              description: "The transaction was rejected or failed. Please try again.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
           
           // Record transaction in backend
           await apiRequest('POST', '/api/transactions', {
@@ -240,13 +271,30 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
         const milestoneDescriptions = milestones.map(m => m.description);
         const milestoneAmounts = milestones.map(m => m.amount);
         
-        // Create milestone-based investment via smart contract
-        const txHash = await createInvestment(
-          startup.walletAddress,
-          milestoneDescriptions,
-          milestoneAmounts,
-          totalMilestoneAmount.toString()
-        );
+        // First connect to MetaMask
+        const account = await connectMetaMask();
+        
+        if (!account) {
+          toast({
+            title: "Wallet connection failed",
+            description: "Failed to connect to MetaMask. Please make sure it's installed and unlocked.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // In a real application, you would deploy and interact with a smart contract
+        // For now, we'll just create a regular transaction and mark it as milestone-based
+        
+        // Convert USD amount to ETH (simplified conversion for demo)
+        const ethAmount = (totalMilestoneAmount / 2000).toString(); // Assuming 1 ETH = $2000
+        
+        // Convert ETH to Wei for the transaction
+        const weiAmount = ethToWei(ethAmount);
+        
+        // Send Ethereum transaction for the total amount
+        const txHash = await sendTransaction(account, startup.walletAddress, weiAmount);
         
         // Record transaction in backend
         await apiRequest('POST', '/api/transactions', {

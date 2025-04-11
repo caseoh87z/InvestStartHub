@@ -115,13 +115,24 @@ const StartupCard: React.FC<StartupCardProps> = ({
         {showActions && (
           <div className="mt-6 flex space-x-3">
             {id ? (
-              <Button 
-                className="flex-1 flex items-center justify-center bg-primary hover:bg-blue-700"
-                onClick={onInvestClick}
-              >
-                <i className="fas fa-dollar-sign mr-2"></i>
-                Invest
-              </Button>
+              <>
+                <Button 
+                  className="flex-1 flex items-center justify-center bg-primary hover:bg-blue-700"
+                  onClick={onInvestClick}
+                >
+                  <i className="fas fa-dollar-sign mr-2"></i>
+                  Invest
+                </Button>
+                <Link href={`/startup/details/${id}`}>
+                  <Button 
+                    variant="outline"
+                    className="flex-1 flex items-center justify-center"
+                  >
+                    <i className="fas fa-eye mr-2"></i>
+                    Details
+                  </Button>
+                </Link>
+              </>
             ) : (
               <Button 
                 className="flex-1 flex items-center justify-center bg-primary hover:bg-blue-700"
