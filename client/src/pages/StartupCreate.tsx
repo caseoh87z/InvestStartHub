@@ -67,10 +67,42 @@ const StartupCreate: React.FC = () => {
   // Create startup mutation
   const createStartupMutation = useMutation({
     mutationFn: async (startupData: typeof form & { walletAddress?: string }) => {
-      const res = await apiRequest('POST', '/api/startups', startupData);
-      return res.json();
+      console.log('Creating startup with data:', startupData);
+      const token = localStorage.getItem('token');
+      console.log('Auth token:', token);
+      
+      if (!token) {
+        throw new Error('Authentication token missing - please log in again');
+      }
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      
+      try {
+        const response = await fetch('/api/startups', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(startupData)
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`Server error: ${response.status} - ${errorText || response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('API request error:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Startup created successfully:', data);
       toast({
         title: "Startup created successfully!",
         description: "Your startup profile has been created. You can now manage your profile and receive investments.",
@@ -79,11 +111,30 @@ const StartupCreate: React.FC = () => {
     },
     onError: (error) => {
       console.error('Create startup error:', error);
-      toast({
-        title: "Failed to create startup",
-        description: "There was an error creating your startup. Please try again.",
-        variant: "destructive",
-      });
+      
+      // More detailed error reporting
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+        
+        const errorMessage = error.message.includes('401') 
+          ? "Authentication error. Please log in again."
+          : error.message.includes('403')
+          ? "You don't have permission to create a startup. Make sure you're registered as a founder."
+          : "There was an error creating your startup. Please try again.";
+        
+        toast({
+          title: "Failed to create startup",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to create startup",
+          description: "There was an error creating your startup. Please try again.",
+          variant: "destructive",
+        });
+      }
+      
       setIsSubmitting(false);
     }
   });
