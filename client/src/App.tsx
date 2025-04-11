@@ -15,10 +15,36 @@ import Messages from "@/pages/Messages";
 import { useAuth } from "./lib/context/AuthContext";
 import { useEffect } from "react";
 
+// Protected route component that requires authentication
+const ProtectedRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>, path: string }) => {
+  const { isAuth, isLoading } = useAuth();
+  const [, navigate] = useLocation();
+  
+  useEffect(() => {
+    if (!isLoading && !isAuth) {
+      console.log("User not authenticated, redirecting to login");
+      navigate('/auth/login');
+    }
+  }, [isAuth, isLoading, navigate]);
+  
+  return <Route {...rest} component={Component} />;
+};
+
 function Router() {
   console.log("Rendering Router component");
   const { isAuth, user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  
+  useEffect(() => {
+    console.log("Current location:", location);
+  }, [location]);
+
+  // Redirect authenticated users away from auth pages
+  useEffect(() => {
+    if (isAuth && location.startsWith('/auth')) {
+      navigate('/');
+    }
+  }, [isAuth, location, navigate]);
   
   // Simple routing for demo purposes
   return (
@@ -27,17 +53,17 @@ function Router() {
       <Route path="/auth/:type" component={Auth} />
       
       {/* Startup routes */}
-      <Route path="/startup/dashboard" component={StartupDashboardPage} />
-      <Route path="/startup/create" component={StartupCreate} />
-      <Route path="/startup/transactions" component={StartupTransactions} />
+      <ProtectedRoute path="/startup/dashboard" component={StartupDashboardPage} />
+      <ProtectedRoute path="/startup/create" component={StartupCreate} />
+      <ProtectedRoute path="/startup/transactions" component={StartupTransactions} />
       <Route path="/startup/:id" component={StartupProfile} />
       
       {/* Investor routes */}
-      <Route path="/investor/dashboard" component={InvestorDashboardPage} />
-      <Route path="/investor/transactions" component={InvestorTransactions} />
+      <ProtectedRoute path="/investor/dashboard" component={InvestorDashboardPage} />
+      <ProtectedRoute path="/investor/transactions" component={InvestorTransactions} />
       
       {/* Shared routes */}
-      <Route path="/messages/:userId?" component={Messages} />
+      <ProtectedRoute path="/messages/:userId?" component={Messages} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
