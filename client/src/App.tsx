@@ -48,44 +48,39 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ component: Component, r
 };
 
 function Router() {
+  console.log("Rendering Router component");
+  
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/auth/:type" component={Auth} />
       
-      {/* Founder Routes */}
-      <Route 
-        path="/startup/dashboard" 
-        component={() => <ProtectedRoute component={StartupDashboardPage} requiredRole="founder" />} 
-      />
-      <Route 
-        path="/startup/profile" 
-        component={() => <ProtectedRoute component={StartupProfile} requiredRole="founder" />} 
-      />
-      <Route 
-        path="/startup/create" 
-        component={() => <ProtectedRoute component={StartupCreate} requiredRole="founder" />} 
-      />
-      <Route 
-        path="/startup/transactions" 
-        component={() => <ProtectedRoute component={StartupTransactions} requiredRole="founder" />} 
-      />
+      {/* Founder Routes - Define without using function components for cleaner rendering */}
+      <Route path="/startup/dashboard">
+        <ProtectedRoute component={StartupDashboardPage} requiredRole="founder" />
+      </Route>
+      <Route path="/startup/profile">
+        <ProtectedRoute component={StartupProfile} requiredRole="founder" />
+      </Route>
+      <Route path="/startup/create">
+        <ProtectedRoute component={StartupCreate} requiredRole="founder" />
+      </Route>
+      <Route path="/startup/transactions">
+        <ProtectedRoute component={StartupTransactions} requiredRole="founder" />
+      </Route>
       
       {/* Investor Routes */}
-      <Route 
-        path="/investor/dashboard" 
-        component={() => <ProtectedRoute component={InvestorDashboardPage} requiredRole="investor" />} 
-      />
-      <Route 
-        path="/investor/transactions" 
-        component={() => <ProtectedRoute component={InvestorTransactions} requiredRole="investor" />} 
-      />
+      <Route path="/investor/dashboard">
+        <ProtectedRoute component={InvestorDashboardPage} requiredRole="investor" />
+      </Route>
+      <Route path="/investor/transactions">
+        <ProtectedRoute component={InvestorTransactions} requiredRole="investor" />
+      </Route>
       
       {/* Shared Routes */}
-      <Route 
-        path="/messages" 
-        component={() => <ProtectedRoute component={Messages} />} 
-      />
+      <Route path="/messages">
+        <ProtectedRoute component={Messages} />
+      </Route>
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

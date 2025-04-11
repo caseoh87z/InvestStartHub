@@ -63,12 +63,31 @@ const AuthPage: React.FC = () => {
       if (isLoginMode) {
         // Login
         console.log("Attempting login with:", email);
-        const result = await login({ email, password });
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        console.log("Login response status:", response.status);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const result = await response.json();
         console.log("Login successful, received data:", result);
         
         // Store token and user data first
         authLogin(result.token, result.user);
         console.log("Auth context updated with token and user data");
+        
+        // Store direct token in localStorage for redundancy
+        localStorage.setItem('token', result.token);
+        console.log("Token stored directly in localStorage");
         
         toast({
           title: "Login successful",
@@ -88,21 +107,40 @@ const AuthPage: React.FC = () => {
           } else {
             window.location.href = '/investor/dashboard'; // Force hard navigation
           }
-        }, 300);
+        }, 500);
       } else {
         // Registration
         console.log("Attempting registration with:", email, "as", role);
-        const result = await register({ 
-          email, 
-          password, 
-          role,
-          walletAddress: walletAddress || undefined
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            role,
+            walletAddress: walletAddress || undefined
+          })
         });
+        
+        console.log("Register response status:", response.status);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Registration failed');
+        }
+        
+        const result = await response.json();
         console.log("Registration successful, received data:", result);
         
         // Store token and user data first
         authLogin(result.token, result.user);
         console.log("Auth context updated with token and user data");
+        
+        // Store direct token in localStorage for redundancy
+        localStorage.setItem('token', result.token);
+        console.log("Token stored directly in localStorage");
         
         toast({
           title: "Registration successful",
@@ -122,7 +160,7 @@ const AuthPage: React.FC = () => {
           } else {
             window.location.href = '/investor/dashboard'; // Force hard navigation
           }
-        }, 300);
+        }, 500);
       }
     } catch (error) {
       console.error('Authentication error:', error);
