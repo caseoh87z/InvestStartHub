@@ -398,11 +398,16 @@ export const getMilestones = async (contractAddress: string): Promise<Array<{
       try {
         const milestone = await contract.methods.getMilestone(i).call();
         
-        if (milestone) {
+        if (milestone && typeof milestone === 'object') {
+          // TypeScript safety: explicitly check if properties exist
+          const description = milestone.hasOwnProperty('description') ? String(milestone.description) : '';
+          const amount = milestone.hasOwnProperty('amount') ? String(milestone.amount) : '0';
+          const isCompleted = milestone.hasOwnProperty('isCompleted') ? Boolean(milestone.isCompleted) : false;
+          
           milestones.push({
-            description: milestone.description ? String(milestone.description) : '',
-            amount: milestone.amount ? String(milestone.amount) : '0',
-            isCompleted: Boolean(milestone.isCompleted)
+            description,
+            amount,
+            isCompleted
           });
         }
       } catch (err) {
