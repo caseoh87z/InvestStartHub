@@ -463,5 +463,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Smart Contract routes
+  app.post("/api/contracts", authenticate, async (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      
+      if (user.role !== "investor") {
+        return res.status(403).json({ message: "Only investors can create contracts" });
+      }
+      
+      const { startupId, contractAddress, startupWalletAddress, investorWalletAddress } = req.body;
+      
+      if (!startupId || !contractAddress || !startupWalletAddress || !investorWalletAddress) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
+      
+      // Create the contract
+      const contract = new Contract({
+        startupId,
+        investorId: user._id,
+        contractAddress,
+        startupWalletAddress,
+        investorWalletAddress,
+        status: 'active'
+      });
+      
+      await contract.save();
+      res.status(201).json(contract);
+    } catch (error) {
+      log(`Contract creation error: ${error}`, 'api');
+      res.status(500).json({ message: "Failed to create contract" });
+    }
+  });
+  
+  app.get("/api/contracts/startup/:startupId", authenticate, async (req: Request, res: Response) => {
+    try {
+      const startupId = req.params.startupId;
+      const user = req.user;
+      
+      if (!mongoose.Types.ObjectId.isValid(startupId)) {
+        return res.status(400).json({ message: "Invalid startup ID" });
+      }
+      
+      const startup = await Startup.findById(startupId);
+      if (!startup) {
+        return res.status(404).json({ message: "Startup not found" });
+      }
+      
+      // Investors can see all contracts for a startup
+      // Founders can only see contracts for their own startup
+      if (user.role === "founder" && startup.userId.toString() !== user._id.toString()) {
+        return res.status(403).json({ message: "You don't have permission to view these contracts" });
+      }
+      
+      const contracts = await Contract.find({ startupId }).sort({ createdAt: -1 });
+      res.json(contracts);
+    } catch (error) {
+      log(`Get startup contracts error: ${error}`, 'api');
+      res.status(500).json({ message: "Failed to get contracts" });
+    }
+  });
+  
+  app.get("/api/contracts/investor", authenticate, async (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      
+      if (user.role !== "investor") {
+        return res.status(403).json({ message: "Only investors can access their contracts" });
+      }
+      
+      const contracts = await Contract.find({ investorId: user._id }).sort({ createdAt: -1 });
+      res.json(contracts);
+    } catch (error) {
+      log(`Get investor contracts error: ${error}`, 'api');
+      res.status(500).json({ message: "Failed to get contracts" });
+    }
+  });
+  
+  app.get("/api/contracts/:id", authenticate, async (req: Request, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const user = req.user;
+      
+      if (!mongoose.Types.ObjectId.isValid(contractId)) {
+        return res.status(400).json({ message: "Invalid contract ID" });
+      }
+      
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // Only allow access to users associated with the contract
+      const startup = await Startup.findById(contract.startupId);
+      if (!startup) {
+        return res.status(404).json({ message: "Startup not found" });
+      }
+      
+      const isInvestor = contract.investorId.toString() === user._id.toString();
+      const isFounder = startup.userId.toString() === user._id.toString();
+      
+      if (!isInvestor && !isFounder) {
+        return res.status(403).json({ message: "You don't have permission to view this contract" });
+      }
+      
+      res.json(contract);
+    } catch (error) {
+      log(`Get contract error: ${error}`, 'api');
+      res.status(500).json({ message: "Failed to get contract" });
+    }
+  });
+  
+  app.put("/api/contracts/:id/status", authenticate, async (req: Request, res: Response) => {
+    try {
+      const contractId = req.params.id;
+      const { status } = req.body;
+      const user = req.user;
+      
+      if (!mongoose.Types.ObjectId.isValid(contractId)) {
+        return res.status(400).json({ message: "Invalid contract ID" });
+      }
+      
+      if (!['active', 'completed', 'cancelled'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      // Only allow access to users associated with the contract
+      const startup = await Startup.findById(contract.startupId);
+      if (!startup) {
+        return res.status(404).json({ message: "Startup not found" });
+      }
+      
+      const isInvestor = contract.investorId.toString() === user._id.toString();
+      const isFounder = startup.userId.toString() === user._id.toString();
+      
+      if (!isInvestor && !isFounder) {
+        return res.status(403).json({ message: "You don't have permission to update this contract" });
+      }
+      
+      // Update the contract status
+      contract.status = status;
+      await contract.save();
+      
+      res.json(contract);
+    } catch (error) {
+      log(`Update contract status error: ${error}`, 'api');
+      res.status(500).json({ message: "Failed to update contract status" });
+    }
+  });
+  
   return httpServer;
 }

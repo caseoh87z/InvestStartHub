@@ -26,6 +26,7 @@ import { formatCurrency } from '@/lib/utils';
 import { PlusCircle, MinusCircle, CheckCircle } from 'lucide-react';
 import CryptoPayment from './CryptoPayment';
 import UpiPayment from './UpiPayment';
+import MilestoneContract from './MilestoneContract';
 
 interface Milestone {
   description: string;

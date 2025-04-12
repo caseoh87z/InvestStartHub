@@ -284,10 +284,13 @@ export const deployInvestmentContract = async (
     // Deploy with gas estimation
     const deployedContract = await deployTx.send({
       from,
-      gas
+      gas: typeof gas === 'bigint' ? gas.toString() : gas
     });
     
-    return deployedContract.options.address;
+    if (deployedContract && deployedContract.options && deployedContract.options.address) {
+      return deployedContract.options.address;
+    }
+    return null;
   } catch (error) {
     console.error('Error deploying contract:', error);
     return null;
@@ -366,7 +369,8 @@ export const getContractBalance = async (contractAddress: string): Promise<strin
   try {
     const contract = getInvestmentContract(contractAddress);
     const balance = await contract.methods.getBalance().call();
-    return balance;
+    // Convert BigInt to string if needed
+    return typeof balance === 'bigint' ? balance.toString() : balance;
   } catch (error) {
     console.error('Error getting contract balance:', error);
     return '0';
@@ -382,15 +386,28 @@ export const getMilestones = async (contractAddress: string): Promise<Array<{
   try {
     const contract = getInvestmentContract(contractAddress);
     const count = await contract.methods.getMilestonesCount().call();
+    const countNumber = typeof count === 'string' ? parseInt(count) : Number(count);
     
-    const milestones = [];
-    for (let i = 0; i < parseInt(count); i++) {
-      const milestone = await contract.methods.getMilestone(i).call();
-      milestones.push({
-        description: milestone.description,
-        amount: milestone.amount,
-        isCompleted: milestone.isCompleted
-      });
+    const milestones: Array<{
+      description: string;
+      amount: string;
+      isCompleted: boolean;
+    }> = [];
+    
+    for (let i = 0; i < countNumber; i++) {
+      try {
+        const milestone = await contract.methods.getMilestone(i).call();
+        
+        if (milestone) {
+          milestones.push({
+            description: milestone.description || '',
+            amount: milestone.amount?.toString() || '0',
+            isCompleted: !!milestone.isCompleted
+          });
+        }
+      } catch (err) {
+        console.error(`Error fetching milestone ${i}:`, err);
+      }
     }
     
     return milestones;
