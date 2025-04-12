@@ -175,12 +175,15 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
           }
           
           // Record transaction in backend
-          await apiRequest('POST', '/api/transactions', {
-            startupId: startup.id,
-            amount: Math.floor(amountNum * 100), // Convert to cents
-            method: 'metamask',
-            transactionId: txHash,
-            status: 'completed'
+          await apiRequest('/api/transactions', {
+            method: 'POST',
+            data: {
+              startupId: startup.id,
+              amount: Math.floor(amountNum * 100), // Convert to cents
+              method: 'metamask',
+              transactionId: txHash,
+              status: 'completed'
+            }
           });
           
           toast({
@@ -204,12 +207,15 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
           }
           
           // Record transaction in backend
-          await apiRequest('POST', '/api/transactions', {
-            startupId: startup.id,
-            amount: Math.floor(amountNum * 100), // Convert to cents
-            method: 'upi',
-            transactionId: transactionId,
-            status: 'pending' // UPI transactions need verification
+          await apiRequest('/api/transactions', {
+            method: 'POST',
+            data: {
+              startupId: startup.id,
+              amount: Math.floor(amountNum * 100), // Convert to cents
+              method: 'upi',
+              transactionId: transactionId,
+              status: 'pending' // UPI transactions need verification
+            }
           });
           
           toast({
@@ -299,12 +305,15 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
         const txHash = await sendTransaction(account, startup.walletAddress, weiAmount);
         
         // Record transaction in backend
-        await apiRequest('POST', '/api/transactions', {
-          startupId: startup.id,
-          amount: Math.floor(totalMilestoneAmount * 100), // Convert to cents
-          method: 'smart_contract',
-          transactionId: txHash,
-          status: 'active' // Smart contract transactions start as active
+        await apiRequest('/api/transactions', {
+          method: 'POST',
+          data: {
+            startupId: startup.id,
+            amount: Math.floor(totalMilestoneAmount * 100), // Convert to cents
+            method: 'smart_contract',
+            transactionId: txHash,
+            status: 'active' // Smart contract transactions start as active
+          }
         });
         
         toast({
@@ -404,12 +413,15 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
                       upiQrCode={startup.upiQrCode}
                       onSuccess={(transactionId, amount) => {
                         // Record transaction in backend
-                        apiRequest('POST', '/api/transactions', {
-                          startupId: startup.id,
-                          amount: Math.floor(amount * 100), // Convert to cents
-                          method: 'upi',
-                          transactionId: transactionId,
-                          status: 'pending' // UPI transactions need verification
+                        apiRequest('/api/transactions', {
+                          method: 'POST',
+                          data: {
+                            startupId: startup.id,
+                            amount: Math.floor(amount * 100), // Convert to cents
+                            method: 'upi',
+                            transactionId: transactionId,
+                            status: 'pending' // UPI transactions need verification
+                          }
                         }).then(() => {
                           toast({
                             title: "Investment recorded",
