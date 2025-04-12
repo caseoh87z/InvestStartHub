@@ -235,7 +235,7 @@ const StartupCreate: React.FC = () => {
         description: "Your startup profile has been created. You can now manage your profile and receive investments.",
       });
       
-      // Force a direct redirect to the dashboard after 500ms
+      // Force a direct redirect to the dashboard after 1000ms
       setTimeout(() => {
         // 1. Pre-invalidate queries to ensure fresh data on the dashboard
         queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
@@ -243,14 +243,10 @@ const StartupCreate: React.FC = () => {
         // 2. Set a flag in sessionStorage to signal we're coming from create page
         sessionStorage.setItem('startup_created', 'true');
         
-        // 3. Create a dedicated anchor element and trigger a programmatic click
-        const dashboardLink = document.createElement('a');
-        dashboardLink.href = '/startup/dashboard';
-        dashboardLink.style.display = 'none';
-        document.body.appendChild(dashboardLink);
-        dashboardLink.click();
-        document.body.removeChild(dashboardLink);
-      }, 500);
+        // 3. Use the navigate function directly instead of a programmatic click
+        console.log('Redirecting to dashboard after successful startup creation');
+        navigate('/startup/dashboard');
+      }, 1000);
       
     } catch (error) {
       console.error('Create startup error:', error);

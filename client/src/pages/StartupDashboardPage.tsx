@@ -174,13 +174,6 @@ const StartupDashboardPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/documents/startup', startup.id] });
   };
 
-  // Redirect to startup creation if no startup exists
-  useEffect(() => {
-    if (!startupLoading && !startup && !startupError) {
-      navigate('/startup/create');
-    }
-  }, [startup, startupLoading, startupError, navigate]);
-  
   // Effect to refetch startup data when component mounts, especially from creation page
   useEffect(() => {
     console.log('Dashboard mounted, refetching startup data');
@@ -198,12 +191,34 @@ const StartupDashboardPage: React.FC = () => {
       // Use a small delay before refetching to ensure the invalidation completes
       setTimeout(() => {
         refetchStartup();
-      }, 100);
+      }, 500);
     } else {
       // Normal refetch
       refetchStartup();
     }
   }, [refetchStartup, queryClient]);
+  
+  // Redirect to startup creation if no startup exists - but with a delay to prevent redirect loops
+  // and only if not coming from the creation page
+  useEffect(() => {
+    const isComingFromCreation = sessionStorage.getItem('startup_created') === 'true';
+    
+    // Only redirect if: 
+    // 1. Not loading
+    // 2. No startup found
+    // 3. No error occurred
+    // 4. Not coming directly from startup creation
+    if (!startupLoading && !startup && !startupError && !isComingFromCreation) {
+      // Add a timeout to make sure we don't redirect too quickly before data is loaded
+      const redirectTimer = setTimeout(() => {
+        console.log('No startup found and not coming from creation, redirecting to create page');
+        navigate('/startup/create');
+      }, 1000);
+      
+      // Clean up timeout if component unmounts
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [startup, startupLoading, startupError, navigate]);
 
   // Loading state
   if (startupLoading) {
