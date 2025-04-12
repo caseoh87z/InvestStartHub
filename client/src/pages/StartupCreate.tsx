@@ -141,8 +141,7 @@ const StartupCreate: React.FC = () => {
       
       // Add a brief delay to ensure the toast is shown before redirecting
       setTimeout(() => {
-        // Force a hard navigation to ensure page reload with new auth state
-        window.location.href = '/startup/dashboard';
+        navigate('/startup/dashboard');
       }, 500);
     },
     onError: (error) => {
