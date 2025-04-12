@@ -23,14 +23,16 @@ const StartupDashboardPage: React.FC = () => {
     error: startupError,
     refetch: refetchStartup
   } = useQuery({
-    queryKey: ['/api/startups/user', user?.id],
+    queryKey: ['/api/startups/user', user?._id],
     queryFn: async () => {
       if (!user) {
         console.log('No user found, cannot fetch startup data');
         return null;
       }
       
-      console.log('🔍 Fetching startup data for user:', user.id);
+      // MongoDB stores user IDs as strings in the _id field, not numbers
+      const userId = user._id || user.id;
+      console.log('🔍 Fetching startup data for user:', userId);
       
       // Retry mechanism to ensure we get the data
       const maxRetries = 2;
@@ -41,7 +43,9 @@ const StartupDashboardPage: React.FC = () => {
         try {
           console.log(`Attempt ${retryCount + 1} to fetch startup data`);
           
-          const res = await fetch(`/api/startups/user/${user.id}`, {
+          // Use the GET method with a query parameter instead of a path parameter
+          // to avoid path encoding issues with MongoDB ObjectIDs
+          const res = await fetch(`/api/startups/user/${userId}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
@@ -157,7 +161,7 @@ const StartupDashboardPage: React.FC = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?._id || user?.id] });
     }
   });
 
