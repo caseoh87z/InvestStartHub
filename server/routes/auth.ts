@@ -187,7 +187,7 @@ router.post('/verify-wallet', async (req: Request, res: Response) => {
     
     // Check if wallet already exists
     const existingUser = await User.findOne({ walletAddress });
-    if (existingUser && existingUser._id.toString() !== userId) {
+    if (existingUser && existingUser._id && existingUser._id.toString() !== userId) {
       return res.status(400).json({ 
         success: false,
         message: 'Wallet address already in use by another account' 

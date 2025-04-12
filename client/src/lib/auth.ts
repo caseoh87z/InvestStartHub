@@ -24,18 +24,74 @@ interface AuthResponse {
 
 // Register new user
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
-  const response = await apiRequest('POST', '/api/auth/register', data);
-  return await response.json();
+  console.log("Calling register API with credentials:", data.email);
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    console.log("Register API response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Register API error response:", errorText);
+      throw new Error(`Registration failed: ${errorText || 'Unknown error'}`);
+    }
+    
+    const responseData = await response.json();
+    
+    // Store token in localStorage immediately
+    if (responseData && responseData.token) {
+      console.log("Storing auth token from register response");
+      localStorage.setItem('token', responseData.token);
+    }
+    
+    console.log("Register API response data:", responseData);
+    return responseData;
+  } catch (error) {
+    console.error("Register error:", error);
+    throw error;
+  }
 };
 
 // Login user
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   console.log("Calling login API with credentials:", credentials.email);
-  const response = await apiRequest('POST', '/api/auth/login', credentials);
-  console.log("Login API response status:", response.status);
-  const data = await response.json();
-  console.log("Login API response data:", data);
-  return data;
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(credentials)
+    });
+    
+    console.log("Login API response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Login API error response:", errorText);
+      throw new Error(`Login failed: ${errorText || 'Unknown error'}`);
+    }
+    
+    const responseData = await response.json();
+    
+    // Store token in localStorage immediately
+    if (responseData && responseData.token) {
+      console.log("Storing auth token from login response");
+      localStorage.setItem('token', responseData.token);
+    }
+    
+    console.log("Login API response data:", responseData);
+    return responseData;
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
+  }
 };
 
 // Get current user
