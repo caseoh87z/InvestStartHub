@@ -123,15 +123,14 @@ const StartupCard: React.FC<StartupCardProps> = ({
                   <i className="fas fa-dollar-sign mr-2"></i>
                   Invest
                 </Button>
-                <Link href={`/startup/details/${id}`}>
-                  <Button 
-                    variant="outline"
-                    className="flex-1 flex items-center justify-center"
-                  >
-                    <i className="fas fa-eye mr-2"></i>
-                    Details
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline"
+                  className="flex-1 flex items-center justify-center"
+                  onClick={() => window.location.href = `/startup/details/${id}`}
+                >
+                  <i className="fas fa-eye mr-2"></i>
+                  Details
+                </Button>
               </>
             ) : (
               <Button 

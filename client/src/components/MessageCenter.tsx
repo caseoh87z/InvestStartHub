@@ -42,6 +42,7 @@ interface Contact {
 
 interface MessageCenterProps {
   currentUser: User;
+  initialContactId?: string;
 }
 
 const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser }) => {

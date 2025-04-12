@@ -126,8 +126,28 @@ const InvestorDashboardPage: React.FC = () => {
 
   // Handle chat with founder
   const handleChatWithFounder = (startupId: number) => {
-    // For now, just navigate to messages page
-    navigate(`/messages/${startupId}`);
+    // Find the startup's user ID first
+    try {
+      const startupToChat = startups.find(s => s.id === startupId);
+      if (startupToChat) {
+        // Instead of trying to navigate to a route that doesn't exist,
+        // go to the messages page with a query parameter
+        window.location.href = `/messages?userId=${startupToChat.userId}`;
+      } else {
+        toast({
+          title: "Error",
+          description: "Couldn't find the startup to chat with",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error navigating to chat:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem opening the chat",
+        variant: "destructive"
+      });
+    }
   };
 
   // Initial loading state

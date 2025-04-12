@@ -12,6 +12,9 @@ const Messages: React.FC = () => {
   // Parse URL parameters to get userId if present
   const params = new URLSearchParams(window.location.search);
   const initialContactId = params.get('userId');
+  
+  // Log for debugging
+  console.log("Messages page - initialContactId from URL:", initialContactId);
 
   // Show loading state when authentication status is being determined
   if (isLoading) {
@@ -63,6 +66,7 @@ const Messages: React.FC = () => {
                   email: user.email,
                   role: (user.role as 'founder' | 'investor')
                 }}
+                initialContactId={initialContactId || undefined}
               />
             )}
           </main>
