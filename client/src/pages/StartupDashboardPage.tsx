@@ -16,7 +16,7 @@ const StartupDashboardPage: React.FC = () => {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
 
-  // Fetch startup data
+  // Enhanced startup data fetching with retry logic and better error handling
   const { 
     data: startup, 
     isLoading: startupLoading, 
@@ -25,25 +25,66 @@ const StartupDashboardPage: React.FC = () => {
   } = useQuery({
     queryKey: ['/api/startups/user', user?.id],
     queryFn: async () => {
-      if (!user) return null;
-      console.log('Fetching startup data for user:', user.id);
-      const res = await fetch(`/api/startups/user/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (res.status === 404) {
-        console.log('No startup found for user');
+      if (!user) {
+        console.log('No user found, cannot fetch startup data');
         return null;
       }
-      if (!res.ok) {
-        throw new Error('Failed to fetch startup');
+      
+      console.log('🔍 Fetching startup data for user:', user.id);
+      
+      // Retry mechanism to ensure we get the data
+      const maxRetries = 2;
+      let retryCount = 0;
+      let lastError = null;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          console.log(`Attempt ${retryCount + 1} to fetch startup data`);
+          
+          const res = await fetch(`/api/startups/user/${user.id}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            // Add cache control to prevent browser caching
+            cache: 'no-store'
+          });
+          
+          if (res.status === 404) {
+            console.log('No startup found for user, redirecting to create page');
+            return null;
+          }
+          
+          if (!res.ok) {
+            throw new Error(`Failed to fetch startup: ${res.status} ${res.statusText}`);
+          }
+          
+          const contentType = res.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error(`Invalid response type: ${contentType}`);
+          }
+          
+          const data = await res.json();
+          console.log('✅ Successfully fetched startup data:', data);
+          return data;
+        } catch (error) {
+          lastError = error;
+          console.error(`❌ Error fetching startup (attempt ${retryCount + 1}):`, error);
+          retryCount++;
+          
+          if (retryCount <= maxRetries) {
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retryCount)));
+          }
+        }
       }
-      const data = await res.json();
-      console.log('Fetched startup data:', data);
-      return data;
+      
+      // If we get here, all retries failed
+      throw lastError || new Error('Failed to fetch startup data after multiple attempts');
     },
-    staleTime: 0 // This ensures data is always refetched
+    staleTime: 0, // Always refetch
+    retry: 2,     // React Query's built-in retry mechanism
+    retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000), // Increasing delay between retries
+    refetchOnWindowFocus: false, // Prevent unneeded refetches
   });
 
   // Fetch documents
@@ -174,29 +215,52 @@ const StartupDashboardPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/documents/startup', startup.id] });
   };
 
-  // Effect to refetch startup data when component mounts, especially from creation page
+  // Enhanced effect to refetch startup data when component mounts
   useEffect(() => {
-    console.log('Dashboard mounted, refetching startup data');
+    console.log('💫 Dashboard mounted, initiating data refresh');
     
-    // Check if coming from startup creation page
-    const isComingFromCreation = sessionStorage.getItem('startup_created') === 'true';
-    if (isComingFromCreation) {
-      console.log('Coming from startup creation, forcing data refresh');
-      // Clear the flag
-      sessionStorage.removeItem('startup_created');
-      
-      // Force a full data refresh
-      queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
-      
-      // Use a small delay before refetching to ensure the invalidation completes
-      setTimeout(() => {
-        refetchStartup();
-      }, 500);
-    } else {
-      // Normal refetch
-      refetchStartup();
-    }
-  }, [refetchStartup, queryClient]);
+    // Always force a complete data refresh on mount
+    const forceRefresh = async () => {
+      try {
+        // First invalidate the query cache for fresh data
+        console.log('Invalidating startup query cache');
+        queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
+        
+        // Wait a moment for invalidation to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Then trigger a hard refetch
+        console.log('Triggering hard refetch of startup data');
+        const result = await refetchStartup();
+        
+        if (result.isSuccess) {
+          console.log('✅ Startup data refetch successful:', result.data);
+          
+          // If we got data, clear any redirect flags
+          if (result.data) {
+            localStorage.removeItem('redirect_to_create_attempted');
+          }
+        } else if (result.isError) {
+          console.error('❌ Error during startup data refetch:', result.error);
+          toast({
+            title: "Refresh failed",
+            description: "There was a problem loading your startup data. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('❌ Unexpected error during data refresh:', error);
+      }
+    };
+    
+    // Execute the refresh function
+    forceRefresh();
+    
+    // Cleanup function
+    return () => {
+      console.log('Dashboard unmounting, cleanup');
+    };
+  }, [refetchStartup, queryClient, toast]);
   
   // Simplified redirect check - only run once when data is loaded
   useEffect(() => {
@@ -235,8 +299,12 @@ const StartupDashboardPage: React.FC = () => {
     );
   }
 
-  // Error state
+  // Enhanced error state with more info and options
   if (startupError) {
+    const errorMessage = startupError instanceof Error 
+      ? startupError.message 
+      : "Unknown error occurred";
+      
     return (
       <div className="min-h-screen bg-gray-50">
         <NavBar />
@@ -244,11 +312,35 @@ const StartupDashboardPage: React.FC = () => {
           <Card className="bg-white shadow">
             <CardContent className="p-6">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-                <p className="text-gray-600 mb-6">Failed to load startup information. Please try again later.</p>
-                <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?.id] })}>
-                  Retry
-                </Button>
+                <h2 className="text-2xl font-bold text-red-600 mb-4">Data Loading Error</h2>
+                <p className="text-gray-600 mb-6">
+                  We encountered a problem loading your startup information. 
+                  <br/>
+                  <span className="text-sm text-gray-500 mt-2 block">{errorMessage}</span>
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <Button 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?.id] });
+                      refetchStartup();
+                    }}
+                  >
+                    <i className="fas fa-sync-alt mr-2"></i>
+                    Retry Loading
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Clear any flags and redirect to create
+                      localStorage.removeItem('redirect_to_create_attempted');
+                      navigate('/startup/create');
+                    }}
+                  >
+                    <i className="fas fa-edit mr-2"></i>
+                    Go to Startup Creation
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -257,8 +349,41 @@ const StartupDashboardPage: React.FC = () => {
     );
   }
 
-  // No startup found (should redirect)
+  // No startup found (show helpful message instead of redirecting)
   if (!startup) {
+    const redirectAttempted = localStorage.getItem('redirect_to_create_attempted');
+    
+    // If we already tried to redirect but still don't have data, show helpful UI
+    if (redirectAttempted) {
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <NavBar />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <Card className="bg-white shadow">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-amber-600 mb-4">No Startup Found</h2>
+                  <p className="text-gray-600 mb-6">
+                    You don't have a startup profile yet. Click below to create one.
+                  </p>
+                  <Button 
+                    onClick={() => {
+                      localStorage.removeItem('redirect_to_create_attempted');
+                      navigate('/startup/create');
+                    }}
+                  >
+                    <i className="fas fa-plus-circle mr-2"></i>
+                    Create Startup
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+    
+    // Otherwise, return null to allow the redirect effect to work
     return null;
   }
 
