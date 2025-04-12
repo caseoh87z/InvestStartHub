@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/lib/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,37 +17,65 @@ interface NavBarProps {
   transparent?: boolean;
 }
 
+// Interface for decoded user token
+interface DecodedUser {
+  id?: string;
+  email: string;
+  role: 'founder' | 'investor';
+  iat?: number;
+  exp?: number;
+}
+
 const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
-  // Get auth state from context
-  const { user, isAuth, isLoading, logout } = useAuth();
   const [location, navigate] = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<DecodedUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Check for token in localStorage
+  // Check for token and decode user info
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      try {
+        // Decode token to get user info
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        
+        const userData = JSON.parse(jsonPayload) as DecodedUser;
+        setUser(userData);
+        console.log("NavBar: Decoded user from token:", userData);
+      } catch (e) {
+        console.error("NavBar: Error decoding token", e);
+      }
+    }
+    
+    setIsLoading(false);
+  }, []);
+  
+  // Direct token check for authentication
   const token = localStorage.getItem('token');
-  
-  // Check if a token exists at all
-  const tokenExists = !!token;
-  
-  // Determine authentication status with better loading handling
-  // If isLoading is true but there's no token, we should show login buttons immediately
-  // Only show loading state when there IS a token but user data isn't loaded yet
-  const isAuthenticated = isAuth || (tokenExists && !isLoading);
+  const isAuthenticated = !!token;
   
   // Debug logging
   console.log("NavBar: auth state =", { 
-    isAuth, 
-    isLoading, 
     isAuthenticated,
-    tokenExists: !!token,
+    hasToken: !!token,
+    isLoading,
     userEmail: user?.email,
     userRole: user?.role
   });
 
   const handleLogout = () => {
     console.log("NavBar: Logging out user");
-    // Call the logout function from auth context
-    logout();
+    // Clear token from localStorage
+    localStorage.removeItem('token');
     
     // Force reload the page to ensure all state is properly reset
     setTimeout(() => {
@@ -159,7 +186,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
             ) : (
               // Show sign in/sign up buttons by default 
               // Only show loading state when we know there's a token but the user data isn't loaded yet
-              (isLoading && tokenExists) ? (
+              (isLoading && token) ? (
                 // Show a loading state only when token exists but we're still loading user data
                 <div className="px-3 py-2 text-sm text-gray-500">
                   Loading...
@@ -270,7 +297,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
               ) : (
                 // Show sign in/sign up buttons by default for mobile menu too
                 // Only show loading when we have a token but user data isn't loaded yet
-                (isLoading && tokenExists) ? (
+                (isLoading && token) ? (
                   <div className="block px-3 py-2 text-sm text-gray-500">
                     Loading...
                   </div>
