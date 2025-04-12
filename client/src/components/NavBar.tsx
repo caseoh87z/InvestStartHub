@@ -27,9 +27,13 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
   // Check for token in localStorage
   const token = localStorage.getItem('token');
   
-  // Use either the auth state from context or the token presence
-  // This works as a fallback when the context hasn't fully loaded yet
-  const isAuthenticated = isAuth || (!!token && !isLoading);
+  // Check if a token exists at all
+  const tokenExists = !!token;
+  
+  // Determine authentication status with better loading handling
+  // If isLoading is true but there's no token, we should show login buttons immediately
+  // Only show loading state when there IS a token but user data isn't loaded yet
+  const isAuthenticated = isAuth || (tokenExists && !isLoading);
   
   // Debug logging
   console.log("NavBar: auth state =", { 
@@ -152,26 +156,31 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
-            ) : !isLoading ? (
-              <>
-                <div 
-                  className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
-                  onClick={() => navigate('/auth/signin')}
-                >
-                  Sign In
-                </div>
-                <div 
-                  className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-700 cursor-pointer"
-                  onClick={() => navigate('/auth/signup')}
-                >
-                  Sign Up
-                </div>
-              </>
             ) : (
-              // Show a loading state
-              <div className="px-3 py-2 text-sm text-gray-500">
-                Loading...
-              </div>
+              // Show sign in/sign up buttons by default 
+              // Only show loading state when we know there's a token but the user data isn't loaded yet
+              (isLoading && tokenExists) ? (
+                // Show a loading state only when token exists but we're still loading user data
+                <div className="px-3 py-2 text-sm text-gray-500">
+                  Loading...
+                </div>
+              ) : (
+                // Otherwise, always show the sign in buttons
+                <>
+                  <div 
+                    className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
+                    onClick={() => navigate('/auth/signin')}
+                  >
+                    Sign In
+                  </div>
+                  <div 
+                    className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-blue-700 cursor-pointer"
+                    onClick={() => navigate('/auth/signup')}
+                  >
+                    Sign Up
+                  </div>
+                </>
+              )
             )}
             
             {/* Mobile menu button */}
