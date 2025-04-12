@@ -7,17 +7,21 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
+export async function apiRequest<T = any>(
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  options?: {
+    method?: string,
+    data?: unknown | undefined,
+    headers?: HeadersInit
+  }
+): Promise<T> {
   // Get the authentication token from localStorage
   const token = localStorage.getItem('token');
   
   // Prepare headers
   const headers: HeadersInit = {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    ...(options?.headers || {})
   };
   
   // Add Authorization header if token exists
@@ -26,14 +30,14 @@ export async function apiRequest(
   }
 
   const res = await fetch(url, {
-    method,
+    method: options?.method || 'GET',
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: options?.data ? JSON.stringify(options.data) : undefined,
     credentials: "include",
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return await res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

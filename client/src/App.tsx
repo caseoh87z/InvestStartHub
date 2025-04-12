@@ -13,6 +13,7 @@ import StartupTransactions from "@/pages/StartupTransactions";
 import InvestorTransactions from "@/pages/InvestorTransactions";
 import StartupDetailsPage from "@/pages/StartupDetailsPage";
 import Messages from "@/pages/Messages";
+import Settings from "@/pages/Settings";
 import { useAuth } from "./lib/context/AuthContext";
 import { useEffect } from "react";
 
@@ -66,6 +67,7 @@ function Router() {
       
       {/* Shared routes */}
       <ProtectedRoute path="/messages/:userId?" component={Messages} />
+      <ProtectedRoute path="/settings" component={Settings} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
