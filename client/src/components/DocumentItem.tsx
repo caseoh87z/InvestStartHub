@@ -6,6 +6,7 @@ interface DocumentItemProps {
   id: number;
   name: string;
   type: string;
+  documentType?: string;
   fileUrl: string;
   size: number;
   uploadedAt: Date | string;
@@ -17,6 +18,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({
   id,
   name,
   type,
+  documentType = 'Other',
   fileUrl,
   size,
   uploadedAt,
@@ -63,7 +65,12 @@ const DocumentItem: React.FC<DocumentItemProps> = ({
         <div className="flex items-center">
           <i className={`${fileIcon} text-xl mr-3`}></i>
           <div>
-            <p className="text-sm font-medium text-gray-900">{name}</p>
+            <div className="flex items-center">
+              <p className="text-sm font-medium text-gray-900">{name}</p>
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {documentType}
+              </span>
+            </div>
             <p className="text-sm text-gray-500">
               Updated {typeof uploadedAt === 'string' ? formatDate(uploadedAt) : formatDate(uploadedAt)} • {formatFileSize(size)}
             </p>

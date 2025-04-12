@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import MetricCard from './MetricCard';
 import DocumentItem from './DocumentItem';
 import StartupProfileEditor from './StartupProfileEditor';
+import { DocumentUploader, type DocumentType } from './DocumentUploader';
+import { QRCodeUploader } from './QRCodeUploader';
 import { formatCurrency, formatDate, formatWalletAddress } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -45,6 +47,7 @@ interface Document {
   id: number;
   name: string;
   type: string;
+  documentType: string;
   fileUrl: string;
   size: number;
   uploadedAt: string;
@@ -69,8 +72,9 @@ interface StartupDashboardProps {
   transactions: Transaction[];
   unreadMessages: number;
   onProfileEdit: (updatedStartup: Partial<Startup>) => void;
-  onDocumentUpload: (document: File) => Promise<void>;
+  onDocumentUpload: (document: File, documentType: DocumentType) => Promise<void>;
   onDocumentDelete: (documentId: number) => Promise<void>;
+  onQRCodeUpload?: (qrCodeUrl: string) => Promise<void>;
 }
 
 const StartupDashboard: React.FC<StartupDashboardProps> = ({
@@ -320,6 +324,7 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
                         id={doc.id}
                         name={doc.name}
                         type={doc.type}
+                        documentType={doc.documentType}
                         fileUrl={doc.fileUrl}
                         size={doc.size}
                         uploadedAt={doc.uploadedAt}
