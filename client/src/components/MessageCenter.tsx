@@ -58,17 +58,54 @@ const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser, initialConta
   useEffect(() => {
     const fetchContacts = async () => {
       setLoading(true);
+      console.log("MessageCenter - Fetching contacts...");
+      
       try {
-        const data = await apiRequest<Contact[]>('/api/users');
+        // Make a direct fetch call to debug the issue
+        const token = localStorage.getItem('token');
+        console.log("MessageCenter - Auth token exists:", !!token);
+        
+        const response = await fetch('/api/users', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        console.log("MessageCenter - /api/users response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API error response:", errorText);
+          throw new Error(`Failed to fetch contacts: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("MessageCenter - Contacts data:", data);
+        
+        // Convert MongoDB _id to id for compatibility
+        const formattedContacts = data.map((user: any) => ({
+          id: user._id,
+          name: user.username || user.email.split('@')[0],
+          email: user.email,
+          role: user.role
+        }));
+        
+        console.log("MessageCenter - Formatted contacts:", formattedContacts);
         
         // Filter out current user
-        const filteredContacts = data.filter(contact => contact.id !== currentUser.id);
+        const filteredContacts = formattedContacts.filter((contact: Contact) => 
+          contact.id !== currentUser.id
+        );
+        console.log("MessageCenter - Filtered contacts:", filteredContacts);
+        
         setContacts(filteredContacts);
       } catch (error) {
         console.error('Error fetching contacts:', error);
         toast({
           title: "Error",
-          description: "Failed to load contacts.",
+          description: "Failed to load contacts. Please try refreshing the page.",
           variant: "destructive"
         });
       } finally {

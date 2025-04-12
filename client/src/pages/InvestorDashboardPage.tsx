@@ -125,7 +125,7 @@ const InvestorDashboardPage: React.FC = () => {
   };
 
   // Handle chat with founder
-  const handleChatWithFounder = (startupId: number) => {
+  const handleChatWithFounder = async (startupId: number) => {
     // Find the startup's user ID first
     try {
       console.log("Chat with founder clicked, startupId:", startupId);
@@ -134,13 +134,40 @@ const InvestorDashboardPage: React.FC = () => {
       const startupToChat = startups.find(s => s.id === startupId);
       if (startupToChat) {
         console.log("Found startup to chat with:", startupToChat);
-        // Use direct navigation to messages
-        navigate('/messages');
         
-        // Add a slight delay before setting the URL parameter to ensure the page has loaded
-        setTimeout(() => {
-          window.location.href = `/messages?userId=${startupToChat.userId}`;
-        }, 100);
+        try {
+          // Fetch startup details to get the actual userId (founder's ID)
+          const response = await fetch(`/api/startups/${startupId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to get startup details: ${response.status}`);
+          }
+          
+          const startupDetails = await response.json();
+          console.log("Startup details:", startupDetails);
+          
+          if (startupDetails && startupDetails.userId) {
+            // Navigate directly to messages with userId parameter
+            const founderId = startupDetails.userId;
+            console.log("Found founder ID:", founderId);
+            
+            toast({
+              title: "Opening chat",
+              description: "Loading chat with startup founder..."
+            });
+            
+            // Full page navigation to messages with the founder's ID
+            window.location.href = `/messages?userId=${founderId}`;
+          } else {
+            throw new Error("Couldn't find user ID for this startup");
+          }
+        } catch (error) {
+          console.error("Error getting startup details:", error);
+          toast({
+            title: "Error",
+            description: "Could not find the founder's contact information",
+            variant: "destructive"
+          });
+        }
       } else {
         console.error("Could not find startup with ID:", startupId);
         toast({

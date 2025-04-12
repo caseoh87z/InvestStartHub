@@ -146,7 +146,20 @@ const StartupCard: React.FC<StartupCardProps> = ({
             ) : (
               <Button 
                 className="flex-1 flex items-center justify-center bg-primary hover:bg-blue-700"
-                onClick={() => window.location.href = '/auth/signin'}
+                onClick={() => {
+                  console.log("View details clicked for limited preview card");
+                  
+                  // First check if the user is logged in
+                  const token = localStorage.getItem('token');
+                  if (token) {
+                    // If logged in, go to the generic startup list
+                    window.location.href = '/startup/explore';
+                  } else {
+                    // Without token, save the URL to return to after login
+                    localStorage.setItem('redirectAfterLogin', '/startup/explore');
+                    window.location.href = '/auth/signin';
+                  }
+                }}
               >
                 <i className="fas fa-eye mr-2"></i>
                 View Details
