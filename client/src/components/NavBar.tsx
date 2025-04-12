@@ -24,17 +24,21 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
-  // Get token directly from localStorage, but ensure it only works when isAuth is also true
-  // This ensures logout properly removes the token from both localStorage and auth state
-  const hasToken = !!localStorage.getItem('token') && isAuth;
+  // Check for token in localStorage
+  const token = localStorage.getItem('token');
+  
+  // Use either the auth state from context or the token presence
+  // This works as a fallback when the context hasn't fully loaded yet
+  const isAuthenticated = isAuth || (!!token && !isLoading);
   
   // Debug logging
   console.log("NavBar: auth state =", { 
     isAuth, 
     isLoading, 
+    isAuthenticated,
+    tokenExists: !!token,
     userEmail: user?.email,
-    userRole: user?.role,
-    hasToken
+    userRole: user?.role
   });
 
   const handleLogout = () => {
@@ -83,7 +87,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
           
           <div className="flex items-center">
             {/* Check if user is authenticated by token or user object existence */}
-            {(hasToken || (isAuth && user)) ? (
+            {isAuthenticated ? (
               <>
                 <Button variant="ghost" size="icon" className="mr-2">
                   <Bell className="h-5 w-5" />
@@ -203,7 +207,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
               </div>
               
               {/* Mobile menu authentication check */}
-              {(hasToken || (isAuth && user)) ? (
+              {isAuthenticated ? (
                 <>
                   {user ? (
                     <>
