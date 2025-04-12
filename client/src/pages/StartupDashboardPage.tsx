@@ -115,14 +115,27 @@ const StartupDashboardPage: React.FC = () => {
   const handleProfileUpdate = async (updatedStartup: Partial<typeof startup>) => {
     await updateStartupMutation.mutateAsync(updatedStartup);
   };
+  
+  // Handle QR code upload
+  const handleQRCodeUpload = async (qrCodeUrl: string) => {
+    await updateStartupMutation.mutateAsync({
+      ...startup,
+      upiQrCode: qrCodeUrl
+    });
+    toast({
+      title: "QR Code uploaded",
+      description: "Your UPI QR code has been updated successfully."
+    });
+  };
 
   // Handle document upload
-  const handleDocumentUpload = async (file: File) => {
+  const handleDocumentUpload = async (file: File, documentType: string) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('startupId', startup.id.toString());
     formData.append('name', file.name);
     formData.append('type', file.type.split('/')[1] || 'document');
+    formData.append('documentType', documentType);
     formData.append('size', file.size.toString());
 
     // In a real implementation, you would upload to a storage service
@@ -133,6 +146,7 @@ const StartupDashboardPage: React.FC = () => {
       startupId: startup.id,
       name: file.name,
       type: file.type.split('/')[1] || 'document',
+      documentType: documentType,
       fileUrl: mockFileUrl,
       size: file.size
     });

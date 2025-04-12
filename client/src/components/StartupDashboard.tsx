@@ -84,7 +84,8 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
   unreadMessages,
   onProfileEdit,
   onDocumentUpload,
-  onDocumentDelete
+  onDocumentDelete,
+  onQRCodeUpload
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -133,24 +134,13 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
     }
   };
 
-  const handleUploadDocument = async () => {
-    if (!selectedFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a file to upload.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleUploadDocument = async (file: File, documentType: DocumentType) => {
     setIsUploading(true);
     try {
-      await onDocumentUpload(selectedFile);
-      setIsUploadModalOpen(false);
-      setSelectedFile(null);
+      await onDocumentUpload(file, documentType);
       toast({
         title: "Document uploaded",
-        description: "Your document has been uploaded successfully.",
+        description: `Your ${documentType} has been uploaded successfully.`,
       });
     } catch (error) {
       console.error('Document upload error:', error);
@@ -535,6 +525,24 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
                 placeholder="yourname@upi"
               />
             </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="upiQrCode" className="text-right pt-2">
+                UPI QR Code
+              </Label>
+              <div className="col-span-3">
+                <QRCodeUploader
+                  initialImage={startup.upiQrCode}
+                  onImageUpload={(imageUrl) => {
+                    if (onQRCodeUpload) {
+                      onQRCodeUpload(imageUrl);
+                    }
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Drag and drop or click to upload your UPI QR code. This will be visible to investors.
+                </p>
+              </div>
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
                 Description
@@ -574,40 +582,11 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
       </Dialog>
 
       {/* Upload Document Modal */}
-      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Upload Document</DialogTitle>
-            <DialogDescription>
-              Upload documents to share with potential investors.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 gap-4">
-              <Label htmlFor="document">Select Document</Label>
-              <Input
-                id="document"
-                type="file"
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-              />
-              {selectedFile && (
-                <p className="text-sm text-gray-500">
-                  Selected file: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsUploadModalOpen(false)} disabled={isUploading}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleUploadDocument} disabled={!selectedFile || isUploading}>
-              {isUploading ? "Uploading..." : "Upload Document"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DocumentUploader 
+        open={isUploadModalOpen}
+        onOpenChange={setIsUploadModalOpen}
+        onUpload={handleUploadDocument}
+      />
     </div>
   );
 };
