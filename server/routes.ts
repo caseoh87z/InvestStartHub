@@ -8,6 +8,7 @@ import Startup from "./models/Startup";
 import Transaction from "./models/Transaction";
 import Document from "./models/Document";
 import Message from "./models/Message";
+import Contract from "./models/Contract";
 import { log } from "./vite";
 import mongoose from "mongoose";
 
