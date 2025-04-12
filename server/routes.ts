@@ -216,15 +216,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: u.role
       }));
       
-      res.json({
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify({
         startups: startupDetails,
         users: userDetails,
         totalStartups: allStartups.length,
         totalUsers: allUsers.length
-      });
+      }, null, 2));
     } catch (error) {
       log(`Debug startups error: ${error}`, 'api');
       res.status(500).json({ message: "Error retrieving debug data" });
+    }
+  });
+  
+  // Special debug route to directly check user startup relationship
+  app.get("/api/debug/user-startup/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      log(`Debug route - checking user-startup relationship for userId: ${userId}`, 'api');
+      
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+      
+      const user = await User.findById(userId).select('-password');
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Try with the string comparison
+      const allStartups = await Startup.find({});
+      const matchingStartups = allStartups.filter(s => s.userId.toString() === userId);
+      
+      // Also try with direct query
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      const directQueryStartup = await Startup.findOne({ userId: userObjectId });
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify({
+        user: {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role
+        },
+        matchingStartupsByString: matchingStartups.map(s => ({
+          id: s._id.toString(),
+          name: s.name,
+          stringComparison: `${s.userId.toString()} === ${userId}`
+        })),
+        directQueryResult: directQueryStartup 
+          ? {
+              id: directQueryStartup._id.toString(),
+              name: directQueryStartup.name,
+              userId: directQueryStartup.userId.toString()
+            }
+          : null,
+        allStartupsCount: allStartups.length
+      }, null, 2));
+    } catch (error) {
+      log(`Debug user-startup error: ${error}`, 'api');
+      res.status(500).json({ message: "Error in debug route" });
     }
   });
 

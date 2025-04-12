@@ -250,6 +250,35 @@ const StartupDashboardPage: React.FC = () => {
         // Wait a moment for invalidation to complete
         await new Promise(resolve => setTimeout(resolve, 300));
         
+        // Special debug test to check user-startup relationship
+        if (user && (user._id || user.id)) {
+          const mongoId = user._id?.toString() || user.id?.toString();
+          try {
+            console.log(`Making special debug request to /api/debug/user-startup/${mongoId}`);
+            const debugResponse = await fetch(`/api/debug/user-startup/${mongoId}`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            
+            if (debugResponse.ok) {
+              const debugData = await debugResponse.json();
+              console.log('🔎 DEBUG - User-Startup Relationship Test:', debugData);
+              
+              // If we have a direct query result but the normal endpoint fails, we have a problem
+              if (debugData.directQueryResult) {
+                console.log('✅ DEBUG - Startup found in debug endpoint! ID:', debugData.directQueryResult.id);
+              } else {
+                console.log('❌ DEBUG - No startup found in debug endpoint');
+              }
+            } else {
+              console.error('Debug request failed:', debugResponse.status, debugResponse.statusText);
+            }
+          } catch (debugError) {
+            console.error('Error in debug request:', debugError);
+          }
+        }
+        
         // Then trigger a hard refetch
         console.log('Triggering hard refetch of startup data');
         const result = await refetchStartup();
@@ -281,7 +310,7 @@ const StartupDashboardPage: React.FC = () => {
     return () => {
       console.log('Dashboard unmounting, cleanup');
     };
-  }, [refetchStartup, queryClient, toast]);
+  }, [refetchStartup, queryClient, toast, user]);
   
   // Simplified redirect check - only run once when data is loaded
   useEffect(() => {
