@@ -16,14 +16,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  connectMetaMask,
+  isMetaMaskInstalled, 
+  connectMetaMask, 
   sendTransaction, 
-  isMetaMaskInstalled,
   ethToWei 
 } from '@/lib/web3';
 import { apiRequest } from '@/lib/queryClient';
 import { formatCurrency } from '@/lib/utils';
 import { PlusCircle, MinusCircle, CheckCircle } from 'lucide-react';
+import CryptoPayment from './CryptoPayment';
+import UpiPayment from './UpiPayment';
 
 interface Milestone {
   description: string;
@@ -354,9 +356,79 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
                   <TabsTrigger value="milestone" disabled={paymentMethod === 'upi'}>Milestone-Based</TabsTrigger>
                 </TabsList>
                 <TabsContent value="direct">
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-500 mt-2 mb-4">
                     Send a one-time investment directly to the startup.
                   </p>
+                  
+                  {paymentMethod === 'metamask' ? (
+                    <CryptoPayment
+                      startupId={startup.id}
+                      walletAddress={undefined} // This will be set when user connects wallet
+                      startupWalletAddress={startup.walletAddress}
+                      onSuccess={(txHash, amount) => {
+                        // Record transaction in backend
+                        apiRequest('/api/transactions', {
+                          method: 'POST',
+                          data: {
+                            startupId: startup.id,
+                            amount: Math.floor(amount * 100), // Convert to cents
+                            method: 'metamask',
+                            transactionId: txHash,
+                            status: 'completed'
+                          }
+                        }).then(() => {
+                          toast({
+                            title: "Investment successful!",
+                            description: `You have successfully invested ${amount} ETH in ${startup.name}.`,
+                          });
+                          
+                          onSuccess();
+                          onClose();
+                        }).catch((error) => {
+                          console.error('Investment error:', error);
+                          toast({
+                            title: "Transaction Recording Failed",
+                            description: "Your payment was processed but we couldn't record it in our system. Please contact support.",
+                            variant: "destructive"
+                          });
+                        });
+                      }}
+                      onWalletConnect={(address) => {
+                        console.log("Wallet connected:", address);
+                      }}
+                    />
+                  ) : (
+                    <UpiPayment
+                      startupId={startup.id}
+                      upiId={startup.upiId}
+                      upiQrCode={startup.upiQrCode}
+                      onSuccess={(transactionId, amount) => {
+                        // Record transaction in backend
+                        apiRequest('POST', '/api/transactions', {
+                          startupId: startup.id,
+                          amount: Math.floor(amount * 100), // Convert to cents
+                          method: 'upi',
+                          transactionId: transactionId,
+                          status: 'pending' // UPI transactions need verification
+                        }).then(() => {
+                          toast({
+                            title: "Investment recorded",
+                            description: `Your investment of ${amount} INR in ${startup.name} has been recorded and is pending verification.`,
+                          });
+                          
+                          onSuccess();
+                          onClose();
+                        }).catch((error) => {
+                          console.error('Investment error:', error);
+                          toast({
+                            title: "Transaction Recording Failed",
+                            description: "We couldn't record your payment in our system. Please contact support.",
+                            variant: "destructive"
+                          });
+                        });
+                      }}
+                    />
+                  )}
                 </TabsContent>
                 <TabsContent value="milestone">
                   <p className="text-sm text-gray-500 mt-2">
