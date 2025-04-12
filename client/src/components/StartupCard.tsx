@@ -123,25 +123,15 @@ const StartupCard: React.FC<StartupCardProps> = ({
                   <i className="fas fa-dollar-sign mr-2"></i>
                   Invest
                 </Button>
-                <Button 
-                  variant="outline"
-                  className="flex-1 flex items-center justify-center"
-                  onClick={() => {
-                    // First make sure the token is available in localStorage
-                    const token = localStorage.getItem('token');
-                    if (token) {
-                      // Navigate with token in place for protected route
-                      window.location.href = `/startup/details/${id}`;
-                    } else {
-                      // Without token, save the URL to return to after login
-                      localStorage.setItem('redirectAfterLogin', `/startup/details/${id}`);
-                      window.location.href = '/auth/signin';
-                    }
-                  }}
-                >
-                  <i className="fas fa-eye mr-2"></i>
-                  Details
-                </Button>
+                <Link href={`/startup/details/${id}`}>
+                  <Button 
+                    variant="outline"
+                    className="flex-1 flex items-center justify-center"
+                  >
+                    <i className="fas fa-eye mr-2"></i>
+                    Details
+                  </Button>
+                </Link>
               </>
             ) : (
               <Button 

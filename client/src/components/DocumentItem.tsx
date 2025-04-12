@@ -49,7 +49,13 @@ const DocumentItem: React.FC<DocumentItemProps> = ({
   
   // Handle download
   const handleDownload = () => {
-    window.open(fileUrl, '_blank');
+    // Create an anchor element and trigger download
+    const a = document.createElement('a');
+    a.href = fileUrl;
+    a.download = name; // Set the file name
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
   
   // Handle delete

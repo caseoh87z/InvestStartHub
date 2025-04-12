@@ -227,18 +227,37 @@ const StartupDetailsPage: React.FC = () => {
                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                         </div>
                       ) : documents.length > 0 ? (
-                        <div className="space-y-4">
-                          {documents.map((doc: any) => (
-                            <DocumentItem
-                              key={doc.id}
-                              id={doc.id}
-                              name={doc.name}
-                              type={doc.type}
-                              fileUrl={doc.fileUrl}
-                              size={doc.size}
-                              uploadedAt={doc.createdAt}
-                            />
-                          ))}
+                        <div className="space-y-6">
+                          {/* Group documents by type */}
+                          {(() => {
+                            const groupedDocs: Record<string, any[]> = {};
+                            documents.forEach((doc: any) => {
+                              const type = doc.documentType || 'Other';
+                              if (!groupedDocs[type]) groupedDocs[type] = [];
+                              groupedDocs[type].push(doc);
+                            });
+                            
+                            return Object.entries(groupedDocs).map(([type, docs]) => (
+                              <div key={type} className="border rounded-lg p-4">
+                                <h3 className="font-medium text-gray-900 mb-3">{type}</h3>
+                                <ul className="divide-y divide-gray-200">
+                                  {docs.map((doc: any) => (
+                                    <DocumentItem
+                                      key={doc.id}
+                                      id={doc.id}
+                                      name={doc.name}
+                                      type={doc.type}
+                                      documentType={doc.documentType || 'Other'}
+                                      fileUrl={doc.fileUrl}
+                                      size={doc.size}
+                                      uploadedAt={doc.createdAt}
+                                      canDelete={false}
+                                    />
+                                  ))}
+                                </ul>
+                              </div>
+                            ));
+                          })()}
                         </div>
                       ) : (
                         <div className="text-center py-8">
