@@ -19,11 +19,19 @@ interface NavBarProps {
 }
 
 const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
+  // Get auth state from context
   const { user, isAuth, isLoading, logout } = useAuth();
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
-  console.log("NavBar: auth state =", { isAuth, isLoading, user: user?.email });
+  // Debug logging
+  console.log("NavBar: auth state =", { 
+    isAuth, 
+    isLoading, 
+    userEmail: user?.email,
+    userRole: user?.role,
+    hasToken: !!localStorage.getItem('token')
+  });
 
   const handleLogout = () => {
     logout();
@@ -63,7 +71,8 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
           </div>
           
           <div className="flex items-center">
-            {isAuth ? (
+            {/* Check if user is authenticated by token and user object existence */}
+            {(isAuth && user) ? (
               <>
                 <Button variant="ghost" size="icon" className="mr-2">
                   <Bell className="h-5 w-5" />
@@ -73,15 +82,20 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>{getNameInitials(user?.email || '')}</AvatarFallback>
+                        <AvatarFallback>{getNameInitials(user.email || '')}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuLabel>
+                      {user.email}
+                      <div className="text-xs text-gray-500 mt-1">
+                        {user.role === 'founder' ? 'Founder' : 'Investor'}
+                      </div>
+                    </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     
-                    {user?.role === 'founder' ? (
+                    {user.role === 'founder' ? (
                       <DropdownMenuItem onClick={() => navigate('/startup/dashboard')}>
                         Startup Dashboard
                       </DropdownMenuItem>
@@ -96,7 +110,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                     </DropdownMenuItem>
                     
                     <DropdownMenuItem onClick={() => 
-                      navigate(user?.role === 'founder' ? '/startup/transactions' : '/investor/transactions')
+                      navigate(user.role === 'founder' ? '/startup/transactions' : '/investor/transactions')
                     }>
                       Transactions
                     </DropdownMenuItem>
@@ -112,7 +126,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
-            ) : (
+            ) : !isLoading ? (
               <>
                 <div 
                   className={`${transparent ? 'text-white hover:text-gray-200' : 'text-gray-500 hover:text-gray-900'} px-3 py-2 text-sm font-medium cursor-pointer`}
@@ -127,6 +141,11 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                   Sign Up
                 </div>
               </>
+            ) : (
+              // Show a loading state
+              <div className="px-3 py-2 text-sm text-gray-500">
+                Loading...
+              </div>
             )}
             
             {/* Mobile menu button */}
@@ -161,9 +180,17 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                 Featured Startups
               </div>
               
-              {isAuth ? (
+              {/* Mobile menu authentication check */}
+              {(isAuth && user) ? (
                 <>
-                  {user?.role === 'founder' ? (
+                  <div className="block px-3 py-2 rounded-md text-base font-medium text-gray-900">
+                    {user.email}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {user.role === 'founder' ? 'Founder' : 'Investor'}
+                    </div>
+                  </div>
+                  
+                  {user.role === 'founder' ? (
                     <div
                       className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
                       onClick={() => navigate('/startup/dashboard')}
@@ -197,7 +224,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                     Log out
                   </div>
                 </>
-              ) : (
+              ) : !isLoading ? (
                 <>
                   <div
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
@@ -212,6 +239,10 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                     Sign Up
                   </div>
                 </>
+              ) : (
+                <div className="block px-3 py-2 text-sm text-gray-500">
+                  Loading...
+                </div>
               )}
             </div>
           </div>

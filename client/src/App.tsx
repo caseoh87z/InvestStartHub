@@ -19,24 +19,40 @@ import { useEffect } from "react";
 
 // Protected route component that requires authentication
 const ProtectedRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>, path: string }) => {
-  const { isAuth, isLoading } = useAuth();
+  const { isAuth, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
   
+  // Enhanced authentication check that properly redirects
   useEffect(() => {
+    // Only redirect if not loading and not authenticated
     if (!isLoading && !isAuth) {
-      console.log("User not authenticated, redirecting to login");
+      console.log("ProtectedRoute: User not authenticated, redirecting to login");
+      // Force immediate redirect to auth page
       navigate('/auth/signin');
     }
-  }, [isAuth, isLoading, navigate]);
+  }, [isAuth, isLoading, navigate, rest.path]);
   
-  // Only render the component if authenticated or still loading
-  // This prevents any flash of the protected content before redirect
+  console.log(`ProtectedRoute[${rest.path}]: auth state = ${isAuth ? 'authenticated' : 'not authenticated'}, loading = ${isLoading}`);
+  
+  // Return a component function that respects authentication state
   return (
     <Route
       {...rest}
-      component={(props: any) => 
-        isAuth ? <Component {...props} /> : isLoading ? null : null
-      }
+      component={(props: any) => {
+        // Show nothing while authentication is loading
+        if (isLoading) {
+          return <div className="p-8 text-center">Loading...</div>;
+        }
+        
+        // Render the protected component only when authenticated
+        if (isAuth && user) {
+          console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user.email}`);
+          return <Component {...props} />;
+        }
+        
+        // Otherwise, render nothing (the redirect will happen via useEffect)
+        return <div className="p-8 text-center">You must be logged in to view this page. Redirecting...</div>;
+      }}
     />
   );
 };
