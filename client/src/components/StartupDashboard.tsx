@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MetricCard from './MetricCard';
 import DocumentItem from './DocumentItem';
+import StartupProfileEditor from './StartupProfileEditor';
 import { formatCurrency, formatDate, formatWalletAddress } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
