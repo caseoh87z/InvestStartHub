@@ -156,18 +156,30 @@ const AuthPage: React.FC = () => {
             description: "Welcome to LaunchBlocks!",
           });
           
-          // Determine target URL
-          const targetUrl = registerResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-          console.log("Preparing navigation to dashboard:", targetUrl);
-          
-          // Add a waiting message
-          toast({
-            title: "Success",
-            description: "Preparing your dashboard...",
-          });
-          
-          // Navigate immediately to the appropriate dashboard
-          navigateToTarget(targetUrl);
+          // For founders, direct them to startup creation page if they're new
+          if (registerResponse.user.role === 'founder') {
+            console.log("Founder registered, redirecting to startup creation page");
+            
+            toast({
+              title: "Success",
+              description: "Preparing your startup creation page...",
+            });
+            
+            // New founders need to create a startup first
+            sessionStorage.removeItem('startup_created');
+            navigateToTarget('/startup/create');
+          } else {
+            // For investors, direct to dashboard
+            console.log("Investor registered, redirecting to dashboard");
+            
+            toast({
+              title: "Success",
+              description: "Preparing your dashboard...",
+            });
+            
+            // Navigate to investor dashboard
+            navigateToTarget('/investor/dashboard');
+          }
         } else {
           throw new Error("Invalid response from server");
         }

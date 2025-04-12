@@ -41,8 +41,42 @@ const Auth: React.FC = () => {
           const role = payload.role;
           console.log("Auth page - user already authenticated, role:", role);
           
-          const targetUrl = role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-          navigate(targetUrl);
+          // If founder, check if they have a startup first
+          if (role === 'founder') {
+            const userId = payload.userId;
+            console.log("Auth page - checking if founder has startup");
+            
+            // Make API call to check if founder has a startup
+            fetch(`/api/startups/user/${userId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+            .then(response => {
+              if (response.status === 404) {
+                // No startup found, redirect to create page
+                console.log("Auth page - no startup found, redirecting to create page");
+                sessionStorage.removeItem('startup_created');
+                navigate('/startup/create');
+              } else if (response.ok) {
+                // Startup found, redirect to dashboard
+                console.log("Auth page - startup found, redirecting to dashboard");
+                sessionStorage.setItem('startup_created', 'true');
+                navigate('/startup/dashboard');
+              } else {
+                // Error handling
+                console.error("Auth page - error checking startup status");
+                navigate('/startup/dashboard'); // Default to dashboard on error
+              }
+            })
+            .catch(error => {
+              console.error("Auth page - error fetching startup:", error);
+              navigate('/startup/dashboard'); // Default to dashboard on error
+            });
+          } else {
+            // For investors, just navigate to dashboard
+            navigate('/investor/dashboard');
+          }
         }
       } catch (e) {
         console.error("Error decoding token:", e);
