@@ -24,8 +24,9 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
-  // Get token directly from localStorage
-  const hasToken = !!localStorage.getItem('token');
+  // Get token directly from localStorage, but ensure it only works when isAuth is also true
+  // This ensures logout properly removes the token from both localStorage and auth state
+  const hasToken = !!localStorage.getItem('token') && isAuth;
   
   // Debug logging
   console.log("NavBar: auth state =", { 
@@ -37,8 +38,15 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
   });
 
   const handleLogout = () => {
+    console.log("NavBar: Logging out user");
+    // Call the logout function from auth context
     logout();
-    navigate('/');
+    
+    // Force reload the page to ensure all state is properly reset
+    setTimeout(() => {
+      console.log("NavBar: Navigating to home after logout");
+      window.location.href = '/';
+    }, 100);
   };
 
   return (

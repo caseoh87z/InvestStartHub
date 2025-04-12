@@ -127,8 +127,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Logout function
   const handleLogout = () => {
+    console.log("AuthContext - Logging out, clearing user data and token");
+    // Call the auth utility logout function to clear token
     logout();
+    // Explicitly clear the user state
     setUser(null);
+    // Force a re-render by updating isLoading temporarily
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      console.log("AuthContext - Logout complete, user state cleared");
+    }, 50);
   };
   
   // Update user data

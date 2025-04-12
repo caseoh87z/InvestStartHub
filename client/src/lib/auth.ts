@@ -161,5 +161,15 @@ export const isAuthenticated = (): boolean => {
 
 // Logout user
 export const logout = (): void => {
+  console.log("Logging out user - clearing authentication");
+  // Clear token from localStorage
   removeAuthToken();
+  
+  // Force a small delay to ensure localStorage is properly cleared
+  // before any redirect happens
+  setTimeout(() => {
+    console.log("Logout complete - localStorage cleared");
+    // You could do a force refresh here if needed
+    // window.location.href = '/';
+  }, 50);
 };
