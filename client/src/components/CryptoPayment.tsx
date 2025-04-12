@@ -50,14 +50,17 @@ export function CryptoPayment({
           const networkId = await web3.eth.net.getId();
           let etherscanBase = 'https://etherscan.io';
           
+          // Convert BigInt to Number for comparison if needed
+          const networkIdNum = Number(networkId);
+          
           // Set Etherscan URL based on network
-          if (networkId === 3) {
+          if (networkIdNum === 3) {
             etherscanBase = 'https://ropsten.etherscan.io';
-          } else if (networkId === 4) {
+          } else if (networkIdNum === 4) {
             etherscanBase = 'https://rinkeby.etherscan.io';
-          } else if (networkId === 5) {
+          } else if (networkIdNum === 5) {
             etherscanBase = 'https://goerli.etherscan.io';
-          } else if (networkId === 42) {
+          } else if (networkIdNum === 42) {
             etherscanBase = 'https://kovan.etherscan.io';
           }
           
@@ -177,7 +180,7 @@ export function CryptoPayment({
       )}
 
       {!isMetaMaskInstalled() && (
-        <Alert variant="warning" className="bg-amber-50 text-amber-800 border-amber-300">
+        <Alert className="bg-amber-50 text-amber-800 border-amber-300">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Improved Ethereum Connectivity</AlertTitle>
           <AlertDescription>

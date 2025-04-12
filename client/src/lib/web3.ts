@@ -157,10 +157,16 @@ export const listenForChainChanges = (callback: (chainId: string) => void) => {
 
 // Convert Wei to Eth (10^18 wei = 1 ETH)
 export const weiToEth = (wei: string): string => {
-  return (parseInt(wei, 16) / 1e18).toString();
+  // Make sure we're handling big numbers safely
+  const weiValue = parseInt(wei, 16);
+  const ethValue = weiValue / 1e18;
+  return ethValue.toString();
 };
 
 // Convert Eth to Wei and return as hex
 export const ethToWei = (eth: string): string => {
-  return '0x' + (parseFloat(eth) * 1e18).toString(16);
+  // Make sure we're handling big numbers safely
+  const ethValue = parseFloat(eth);
+  const weiValue = ethValue * 1e18;
+  return '0x' + Math.floor(weiValue).toString(16);
 };
