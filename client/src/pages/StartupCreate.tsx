@@ -131,47 +131,6 @@ const StartupCreate: React.FC = () => {
         console.error('API request error:', error);
         throw error;
       }
-    },
-    onSuccess: (data) => {
-      console.log('Startup created successfully:', data);
-      toast({
-        title: "Startup created successfully!",
-        description: "Your startup profile has been created. You can now manage your profile and receive investments.",
-      });
-      
-      // Update queryClient to force refetch on startup/dashboard
-      queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
-      
-      // Navigate to dashboard immediately
-      navigate('/startup/dashboard');
-    },
-    onError: (error) => {
-      console.error('Create startup error:', error);
-      
-      // More detailed error reporting
-      if (error instanceof Error) {
-        console.error('Error details:', error.message, error.stack);
-        
-        const errorMessage = error.message.includes('401') 
-          ? "Authentication error. Please log in again."
-          : error.message.includes('403')
-          ? "You don't have permission to create a startup. Make sure you're registered as a founder."
-          : "There was an error creating your startup. Please try again.";
-        
-        toast({
-          title: "Failed to create startup",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Failed to create startup",
-          description: "There was an error creating your startup. Please try again.",
-          variant: "destructive",
-        });
-      }
-      
-      setIsSubmitting(false);
     }
   });
 
@@ -263,12 +222,63 @@ const StartupCreate: React.FC = () => {
     
     // Create startup
     try {
-      await createStartupMutation.mutateAsync({
+      const result = await createStartupMutation.mutateAsync({
         ...form,
         walletAddress
       });
+      
+      console.log('Startup created successfully:', result);
+      
+      // Show success message
+      toast({
+        title: "Startup created successfully!",
+        description: "Your startup profile has been created. You can now manage your profile and receive investments.",
+      });
+      
+      // Force a direct redirect to the dashboard after 500ms
+      setTimeout(() => {
+        // 1. Pre-invalidate queries to ensure fresh data on the dashboard
+        queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
+        
+        // 2. Set a flag in sessionStorage to signal we're coming from create page
+        sessionStorage.setItem('startup_created', 'true');
+        
+        // 3. Create a dedicated anchor element and trigger a programmatic click
+        const dashboardLink = document.createElement('a');
+        dashboardLink.href = '/startup/dashboard';
+        dashboardLink.style.display = 'none';
+        document.body.appendChild(dashboardLink);
+        dashboardLink.click();
+        document.body.removeChild(dashboardLink);
+      }, 500);
+      
     } catch (error) {
-      // Error handling is done in the mutation
+      console.error('Create startup error:', error);
+      
+      // More detailed error reporting
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+        
+        const errorMessage = error.message.includes('401') 
+          ? "Authentication error. Please log in again."
+          : error.message.includes('403')
+          ? "You don't have permission to create a startup. Make sure you're registered as a founder."
+          : "There was an error creating your startup. Please try again.";
+        
+        toast({
+          title: "Failed to create startup",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to create startup",
+          description: "There was an error creating your startup. Please try again.",
+          variant: "destructive",
+        });
+      }
+      
+      setIsSubmitting(false);
     }
   };
 

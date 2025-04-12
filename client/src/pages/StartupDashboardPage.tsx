@@ -181,11 +181,29 @@ const StartupDashboardPage: React.FC = () => {
     }
   }, [startup, startupLoading, startupError, navigate]);
   
-  // Effect to refetch startup data when component mounts
+  // Effect to refetch startup data when component mounts, especially from creation page
   useEffect(() => {
     console.log('Dashboard mounted, refetching startup data');
-    refetchStartup();
-  }, [refetchStartup]);
+    
+    // Check if coming from startup creation page
+    const isComingFromCreation = sessionStorage.getItem('startup_created') === 'true';
+    if (isComingFromCreation) {
+      console.log('Coming from startup creation, forcing data refresh');
+      // Clear the flag
+      sessionStorage.removeItem('startup_created');
+      
+      // Force a full data refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
+      
+      // Use a small delay before refetching to ensure the invalidation completes
+      setTimeout(() => {
+        refetchStartup();
+      }, 100);
+    } else {
+      // Normal refetch
+      refetchStartup();
+    }
+  }, [refetchStartup, queryClient]);
 
   // Loading state
   if (startupLoading) {
