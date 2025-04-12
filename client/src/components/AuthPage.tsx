@@ -18,8 +18,17 @@ const AuthPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const { toast } = useToast();
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, authInitialized, isAuth, isLoading: authLoading } = useAuth();
   const [location, navigate] = useLocation();
+  
+  // Log auth state for debugging
+  React.useEffect(() => {
+    console.log("AuthPage - Auth state:", { 
+      isAuth, 
+      authLoading, 
+      authInitialized
+    });
+  }, [isAuth, authLoading, authInitialized]);
 
   const handleRoleChange = (selectedRole: 'founder' | 'investor') => {
     setRole(selectedRole);
@@ -71,6 +80,7 @@ const AuthPage: React.FC = () => {
         
         if (loginResponse && loginResponse.token && loginResponse.user) {
           // Store token and user data in auth context
+          console.log("Setting auth login state with token and user data");
           authLogin(loginResponse.token, loginResponse.user);
           
           toast({
@@ -80,18 +90,25 @@ const AuthPage: React.FC = () => {
           
           // Determine target URL
           const targetUrl = loginResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-          console.log("Navigating to dashboard:", targetUrl);
+          console.log("Preparing navigation to dashboard:", targetUrl);
           
-          // Add a delay before navigation to ensure auth context updates fully
+          // Add a waiting message
           toast({
             title: "Success",
             description: "Preparing your dashboard...",
           });
           
+          // Wait a bit longer for auth state to be fully updated
+          // This ensures the dashboard queries will have the proper auth state
           setTimeout(() => {
+            console.log("Checking auth state before navigation:");
+            console.log("- Auth initialized:", authInitialized);
+            console.log("- Is authenticated:", isAuth);
+            console.log("- Auth loading:", authLoading);
             console.log("Navigating to dashboard after delay:", targetUrl);
+            
             navigate(targetUrl);
-          }, 1500);
+          }, 2000);
         } else {
           throw new Error("Invalid response from server");
         }
@@ -111,6 +128,7 @@ const AuthPage: React.FC = () => {
         
         if (registerResponse && registerResponse.token && registerResponse.user) {
           // Store token and user data in auth context
+          console.log("Setting auth login state with token and user data");
           authLogin(registerResponse.token, registerResponse.user);
           
           toast({
@@ -120,18 +138,25 @@ const AuthPage: React.FC = () => {
           
           // Determine target URL
           const targetUrl = registerResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-          console.log("Navigating to dashboard:", targetUrl);
+          console.log("Preparing navigation to dashboard:", targetUrl);
           
-          // Add a delay before navigation to ensure auth context updates fully
+          // Add a waiting message
           toast({
             title: "Success",
             description: "Preparing your dashboard...",
           });
           
+          // Wait a bit longer for auth state to be fully updated
+          // This ensures the dashboard queries will have the proper auth state
           setTimeout(() => {
+            console.log("Checking auth state before navigation:");
+            console.log("- Auth initialized:", authInitialized);
+            console.log("- Is authenticated:", isAuth);
+            console.log("- Auth loading:", authLoading);
             console.log("Navigating to dashboard after delay:", targetUrl);
+            
             navigate(targetUrl);
-          }, 1500);
+          }, 2000);
         } else {
           throw new Error("Invalid response from server");
         }
