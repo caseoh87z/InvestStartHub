@@ -103,7 +103,10 @@ const StartupDashboardPage: React.FC = () => {
   // Update startup profile mutation
   const updateStartupMutation = useMutation({
     mutationFn: async (updatedStartup: Partial<typeof startup>) => {
-      const res = await apiRequest('PUT', `/api/startups/${startup.id}`, updatedStartup);
+      const res = await apiRequest(`/api/startups/${startup.id}`, {
+        method: 'PUT',
+        data: updatedStartup
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -142,13 +145,16 @@ const StartupDashboardPage: React.FC = () => {
     // and then store the file URL. Here we're creating a mock URL.
     const mockFileUrl = URL.createObjectURL(file);
 
-    await apiRequest('POST', '/api/documents', {
-      startupId: startup.id,
-      name: file.name,
-      type: file.type.split('/')[1] || 'document',
-      documentType: documentType,
-      fileUrl: mockFileUrl,
-      size: file.size
+    await apiRequest('/api/documents', {
+      method: 'POST',
+      data: {
+        startupId: startup.id,
+        name: file.name,
+        type: file.type.split('/')[1] || 'document',
+        documentType: documentType,
+        fileUrl: mockFileUrl,
+        size: file.size
+      }
     });
 
     queryClient.invalidateQueries({ queryKey: ['/api/documents/startup', startup.id] });
@@ -156,7 +162,9 @@ const StartupDashboardPage: React.FC = () => {
 
   // Handle document deletion
   const handleDocumentDelete = async (documentId: number) => {
-    await apiRequest('DELETE', `/api/documents/${documentId}`, undefined);
+    await apiRequest(`/api/documents/${documentId}`, {
+      method: 'DELETE'
+    });
     queryClient.invalidateQueries({ queryKey: ['/api/documents/startup', startup.id] });
   };
 
@@ -222,6 +230,7 @@ const StartupDashboardPage: React.FC = () => {
         onProfileEdit={handleProfileUpdate}
         onDocumentUpload={handleDocumentUpload}
         onDocumentDelete={handleDocumentDelete}
+        onQRCodeUpload={handleQRCodeUpload}
       />
     </div>
   );
