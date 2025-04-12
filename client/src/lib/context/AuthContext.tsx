@@ -37,34 +37,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
-      if (isAuthenticated()) {
+      console.log("AuthContext - Running authentication check...");
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        console.log("AuthContext - Token found in localStorage, attempting to parse...");
         try {
-          // Get user data from localStorage instead of API
-          const token = localStorage.getItem('token');
-          if (token) {
-            // Parse JWT token to extract user data
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(
-              atob(base64)
-                .split('')
-                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
-            );
-            
-            const payload = JSON.parse(jsonPayload);
-            console.log("Extracted user info from token:", payload);
-            
-            // Just use the data from the token instead of making an API call
-            setUser({
-              id: payload.id,
-              email: payload.email,
-              role: payload.role,
-              // Other fields like walletAddress will not be available from the token
-            });
-          }
+          // Parse JWT token to extract user data
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          
+          const payload = JSON.parse(jsonPayload);
+          console.log("AuthContext - Successfully extracted user info from token:", payload);
+          
+          // Set user data from the token
+          const userData = {
+            id: payload.id,
+            email: payload.email,
+            role: payload.role,
+            // walletAddress might be missing from token
+            walletAddress: payload.walletAddress
+          };
+          
+          console.log("AuthContext - Setting user data:", userData);
+          setUser(userData);
+          console.log("AuthContext - User is now authenticated!");
         } catch (error) {
-          console.error('Failed to parse user data from token', error);
+          console.error('AuthContext - Failed to parse user data from token', error);
+          // Clear invalid token
           logout();
           toast({
             title: "Session expired",
@@ -72,7 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             variant: "destructive",
           });
         }
+      } else {
+        console.log("AuthContext - No token found, user is not authenticated");
       }
+      
       setIsLoading(false);
     };
     
