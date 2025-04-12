@@ -82,8 +82,11 @@ const AuthPage: React.FC = () => {
           const targetUrl = loginResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
           console.log("Navigating to dashboard:", targetUrl);
           
-          // Navigate to the dashboard
-          navigate(targetUrl);
+          // Add a small delay before navigation to allow auth context to update fully
+          setTimeout(() => {
+            console.log("Navigating to dashboard after delay:", targetUrl);
+            navigate(targetUrl);
+          }, 500);
         } else {
           throw new Error("Invalid response from server");
         }
@@ -114,8 +117,11 @@ const AuthPage: React.FC = () => {
           const targetUrl = registerResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
           console.log("Navigating to dashboard:", targetUrl);
           
-          // Navigate to the dashboard
-          navigate(targetUrl);
+          // Add a small delay before navigation to allow auth context to update fully
+          setTimeout(() => {
+            console.log("Navigating to dashboard after delay:", targetUrl);
+            navigate(targetUrl);
+          }, 500);
         } else {
           throw new Error("Invalid response from server");
         }
@@ -246,7 +252,7 @@ const AuthPage: React.FC = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Processing...' : isLoginMode ? 'Sign in' : 'Sign up'}
+                {isLoading ? (isLoginMode ? 'Signing in...' : 'Signing up...') : (isLoginMode ? 'Sign in' : 'Sign up')}
               </Button>
             </div>
           </form>

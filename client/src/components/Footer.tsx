@@ -34,18 +34,18 @@ const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Resources</h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link href="/documentation">
-                  <a className="text-base text-gray-300 hover:text-white">Documentation</a>
+                <Link href="/documentation" className="text-base text-gray-300 hover:text-white">
+                  Documentation
                 </Link>
               </li>
               <li>
-                <Link href="/guides">
-                  <a className="text-base text-gray-300 hover:text-white">Guides</a>
+                <Link href="/guides" className="text-base text-gray-300 hover:text-white">
+                  Guides
                 </Link>
               </li>
               <li>
-                <Link href="/api-status">
-                  <a className="text-base text-gray-300 hover:text-white">API Status</a>
+                <Link href="/api-status" className="text-base text-gray-300 hover:text-white">
+                  API Status
                 </Link>
               </li>
             </ul>
@@ -55,23 +55,23 @@ const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Company</h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link href="/about">
-                  <a className="text-base text-gray-300 hover:text-white">About</a>
+                <Link href="/about" className="text-base text-gray-300 hover:text-white">
+                  About
                 </Link>
               </li>
               <li>
-                <Link href="/blog">
-                  <a className="text-base text-gray-300 hover:text-white">Blog</a>
+                <Link href="/blog" className="text-base text-gray-300 hover:text-white">
+                  Blog
                 </Link>
               </li>
               <li>
-                <Link href="/careers">
-                  <a className="text-base text-gray-300 hover:text-white">Careers</a>
+                <Link href="/careers" className="text-base text-gray-300 hover:text-white">
+                  Careers
                 </Link>
               </li>
               <li>
-                <Link href="/contact">
-                  <a className="text-base text-gray-300 hover:text-white">Contact</a>
+                <Link href="/contact" className="text-base text-gray-300 hover:text-white">
+                  Contact
                 </Link>
               </li>
             </ul>

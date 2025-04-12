@@ -44,32 +44,32 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
         // Get token directly to be extra safe
         const token = localStorage.getItem('token');
         
-        // If we have a token or the user is authenticated, we should render the protected component
-        if (token || (isAuth && user)) {
-          if (token) {
-            console.log(`ProtectedRoute[${rest.path}]: Rendering protected component - token exists`);
-          } else {
-            console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user?.email}`);
-          }
-          
-          // Even if we have a token, make sure we only render when the user data is actually loaded
-          // or when there's no isLoading flag anymore
-          if (user || !isLoading) {
-            return <Component {...props} />;
-          }
+        // If user data is loaded (most secure case), render the component
+        if (isAuth && user) {
+          console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user?.email}`);
+          return <Component {...props} />;
         }
         
-        // Show a nice loading state when authentication is in progress
-        if (isLoading || token) {
+        // If we have a token but no user data yet (still loading), show loading state
+        if (token && isLoading) {
+          console.log(`ProtectedRoute[${rest.path}]: Authentication in progress - token exists but still loading user data`);
           return (
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h2 className="text-xl font-semibold">Authentication in progress...</h2>
-                <p className="text-muted-foreground">Please wait while we verify your credentials.</p>
+                <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
+                <p className="text-muted-foreground">Please wait a moment while we prepare your dashboard.</p>
               </div>
             </div>
           );
+        }
+        
+        // If we have a token but loading is complete (unusual case - token exists but no user data)
+        // This can happen when auth verification is complete but user data isn't loaded yet
+        // Still show the component to avoid flickering
+        if (token && !isLoading) {
+          console.log(`ProtectedRoute[${rest.path}]: Rendering with token but no user data yet`);
+          return <Component {...props} />;
         }
         
         // Otherwise show a message that the user needs to log in

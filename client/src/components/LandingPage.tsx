@@ -23,15 +23,20 @@ const LandingPage: React.FC = () => {
                 A decentralized platform where founders meet investors in a secure, transparent environment. Fund and track investments using crypto or traditional payment methods.
               </p>
               <div className="mt-10 flex space-x-4">
-                <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-50">
-                  <Link href="/auth/signup">
-                    <a>Get Started</a>
-                  </Link>
+                <Button
+                  size="lg"
+                  className="bg-white text-primary hover:bg-gray-50"
+                  onClick={() => window.location.href = '/auth/signup'}
+                >
+                  Get Started
                 </Button>
-                <Button asChild variant="outline" size="lg" className="bg-opacity-20 text-white hover:bg-opacity-30 border-white">
-                  <Link href="#how-it-works">
-                    <a>Learn More</a>
-                  </Link>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="bg-opacity-20 text-white hover:bg-opacity-30 border-white"
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  Learn More
                 </Button>
               </div>
             </div>
@@ -321,10 +326,11 @@ const LandingPage: React.FC = () => {
           </div>
           
           <div className="mt-12 text-center">
-            <Button asChild className="bg-accent hover:bg-purple-700">
-              <Link href={"/auth/signin"}>
-                <a>Explore All Startups</a>
-              </Link>
+            <Button 
+              className="bg-accent hover:bg-purple-700"
+              onClick={() => window.location.href = '/auth/signin'}
+            >
+              Explore All Startups
             </Button>
           </div>
         </div>
