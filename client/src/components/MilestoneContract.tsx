@@ -38,7 +38,7 @@ import {
   getMilestones,
   getContractBalance
 } from '@/lib/contracts';
-import { ethToWei, weiToEth } from '@/lib/web3';
+import { ethToWei, weiToEth, connectMetaMask, isMetaMaskInstalled } from '@/lib/web3';
 import { apiRequest } from '@/lib/queryClient';
 
 interface Milestone {
@@ -75,7 +75,15 @@ export function MilestoneContract({
   const [isDeploying, setIsDeploying] = useState<boolean>(false);
   const [isDepositing, setIsDepositing] = useState<boolean>(false);
   const [expandedView, setExpandedView] = useState<boolean>(false);
+  const [localInvestorWalletAddress, setLocalInvestorWalletAddress] = useState<string>(investorWalletAddress || '');
   const { toast } = useToast();
+  
+  // Initialize wallet connection if needed
+  useEffect(() => {
+    if (investorWalletAddress) {
+      setLocalInvestorWalletAddress(investorWalletAddress);
+    }
+  }, [investorWalletAddress]);
 
   // Fetch existing contract data
   useEffect(() => {
@@ -118,6 +126,48 @@ export function MilestoneContract({
     const updatedMilestones = [...milestones];
     updatedMilestones[index] = { ...updatedMilestones[index], [field]: value };
     setMilestones(updatedMilestones);
+  };
+  
+  const handleConnectWallet = async () => {
+    try {
+      if (!isMetaMaskInstalled()) {
+        toast({
+          title: 'MetaMask Not Installed',
+          description: 'Please install MetaMask to use this feature.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      const account = await connectMetaMask();
+      
+      if (account) {
+        setLocalInvestorWalletAddress(account);
+        
+        // Call the parent component's onWalletConnect callback
+        if (onWalletConnect) {
+          onWalletConnect(account);
+        }
+        
+        toast({
+          title: 'Wallet Connected',
+          description: `Connected to wallet: ${account.substring(0, 6)}...${account.substring(account.length - 4)}`,
+        });
+      } else {
+        toast({
+          title: 'Connection Failed',
+          description: 'Failed to connect to MetaMask wallet. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      toast({
+        title: 'Connection Error',
+        description: 'An error occurred while connecting to your wallet.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const addMilestoneField = () => {
@@ -393,28 +443,57 @@ export function MilestoneContract({
             
             <Separator />
             
-            <div className="flex justify-between items-center py-2">
-              <span className="font-medium">Total Investment:</span>
-              <span className="font-bold">{parseFloat(totalAmount).toFixed(4)} ETH</span>
-            </div>
-            
-            <Button 
-              onClick={deployContract}
-              disabled={isDeploying || milestones.some(m => !m.description || !m.amount)}
-              className="w-full"
-            >
-              {isDeploying ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Deploying Contract...
-                </span>
-              ) : (
-                <span>Deploy Smart Contract</span>
-              )}
-            </Button>
+            {!localInvestorWalletAddress ? (
+              <div className="space-y-4">
+                <Alert variant="default">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please connect your wallet to continue with milestone-based investment.
+                  </AlertDescription>
+                </Alert>
+                
+                <Button
+                  onClick={handleConnectWallet}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  Connect MetaMask
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center py-2">
+                  <span className="font-medium">Your Wallet:</span>
+                  <span className="font-mono text-sm">
+                    {`${localInvestorWalletAddress.substring(0, 6)}...${localInvestorWalletAddress.substring(localInvestorWalletAddress.length - 4)}`}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="font-medium">Total Investment:</span>
+                  <span className="font-bold">{parseFloat(totalAmount).toFixed(4)} ETH</span>
+                </div>
+                
+                <Button 
+                  onClick={deployContract}
+                  disabled={isDeploying || milestones.some(m => !m.description || !m.amount)}
+                  className="w-full"
+                >
+                  {isDeploying ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Deploying Contract...
+                    </span>
+                  ) : (
+                    <span>Deploy Smart Contract</span>
+                  )}
+                </Button>
+              </>
+            )}
           </>
         ) : (
           <>

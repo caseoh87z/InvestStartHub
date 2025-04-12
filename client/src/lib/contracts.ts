@@ -369,8 +369,8 @@ export const getContractBalance = async (contractAddress: string): Promise<strin
   try {
     const contract = getInvestmentContract(contractAddress);
     const balance = await contract.methods.getBalance().call();
-    // Convert BigInt to string if needed
-    return typeof balance === 'bigint' ? balance.toString() : balance;
+    // Convert any type to string
+    return balance ? String(balance) : '0';
   } catch (error) {
     console.error('Error getting contract balance:', error);
     return '0';
@@ -400,9 +400,9 @@ export const getMilestones = async (contractAddress: string): Promise<Array<{
         
         if (milestone) {
           milestones.push({
-            description: milestone.description || '',
-            amount: milestone.amount?.toString() || '0',
-            isCompleted: !!milestone.isCompleted
+            description: milestone.description ? String(milestone.description) : '',
+            amount: milestone.amount ? String(milestone.amount) : '0',
+            isCompleted: Boolean(milestone.isCompleted)
           });
         }
       } catch (err) {
