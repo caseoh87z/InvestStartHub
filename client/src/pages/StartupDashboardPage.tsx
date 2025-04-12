@@ -325,7 +325,7 @@ const StartupDashboardPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <Button 
                     onClick={() => {
-                      queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?.id] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?._id || user?.id] });
                       refetchStartup();
                     }}
                   >

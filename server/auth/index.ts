@@ -18,15 +18,24 @@ declare global {
 
 // Generate JWT token
 export const generateToken = (user: IUser): string => {
+  // Include both MongoDB ObjectID (_id) and a conventional id field for compatibility
+  const userId = user._id ? user._id.toString() : '';
+  
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { 
+      id: userId, 
+      _id: userId, // Explicitly include MongoDB's _id as a string
+      email: user.email, 
+      role: user.role,
+      walletAddress: user.walletAddress
+    },
     JWT_SECRET,
     { expiresIn: TOKEN_EXPIRY }
   );
 };
 
 // Verify JWT token
-export const verifyToken = (token: string): any => {
+export const verifyToken = (token: string): {id: string, _id: string, email: string, role: string, walletAddress?: string} | null => {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (error) {

@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: number;
+  _id?: string;  // MongoDB ObjectID format
   email: string;
   role: string;
   walletAddress?: string;
@@ -98,9 +99,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Set auth token for API requests
         setAuthToken(token);
         
-        // Set user data from the token
+        // Set user data from the token - with both standard ID and MongoDB's _id
         const userData = {
           id: payload.id,
+          _id: payload._id || payload.id, // Fallback to using id if _id is not available
           email: payload.email,
           role: payload.role,
           walletAddress: payload.walletAddress
