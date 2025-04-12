@@ -215,7 +215,7 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                 Featured Startups
               </div>
               
-              {/* Mobile menu authentication check */}
+              {/* Mobile menu authentication check - using same logic as desktop */}
               {isAuthenticated ? (
                 <>
                   {user ? (
@@ -267,25 +267,29 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                     Log out
                   </div>
                 </>
-              ) : !isLoading ? (
-                <>
-                  <div
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate('/auth/signin')}
-                  >
-                    Sign In
-                  </div>
-                  <div
-                    className="block px-3 py-2 rounded-md text-base font-medium text-primary hover:text-blue-700 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate('/auth/signup')}
-                  >
-                    Sign Up
-                  </div>
-                </>
               ) : (
-                <div className="block px-3 py-2 text-sm text-gray-500">
-                  Loading...
-                </div>
+                // Show sign in/sign up buttons by default for mobile menu too
+                // Only show loading when we have a token but user data isn't loaded yet
+                (isLoading && tokenExists) ? (
+                  <div className="block px-3 py-2 text-sm text-gray-500">
+                    Loading...
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => navigate('/auth/signin')}
+                    >
+                      Sign In
+                    </div>
+                    <div
+                      className="block px-3 py-2 rounded-md text-base font-medium text-primary hover:text-blue-700 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => navigate('/auth/signup')}
+                    >
+                      Sign Up
+                    </div>
+                  </>
+                )
               )}
             </div>
           </div>
