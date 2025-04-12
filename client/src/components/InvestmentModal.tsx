@@ -58,6 +58,7 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
   const [transactionId, setTransactionId] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [metaMaskAvailable, setMetaMaskAvailable] = useState<boolean>(true);
+  const [walletAddress, setWalletAddress] = useState<string>('');
   const [milestones, setMilestones] = useState<Milestone[]>([
     { description: "Initial funding", amount: "" }
   ]);
@@ -444,10 +445,49 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
                   )}
                 </TabsContent>
                 <TabsContent value="milestone">
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-500 mt-2 mb-4">
                     Release funds gradually as the startup achieves agreed-upon milestones.
                     Only available with MetaMask.
                   </p>
+                  
+                  <MilestoneContract 
+                    startupId={startup.id}
+                    startupWalletAddress={startup.walletAddress || ''}
+                    investorWalletAddress={walletAddress}
+                    onContractCreated={(contractAddress) => {
+                      console.log("Contract deployed at:", contractAddress);
+                      
+                      // Record the contract in the backend
+                      apiRequest('/api/contracts', {
+                        method: 'POST',
+                        data: {
+                          startupId: startup.id,
+                          contractAddress,
+                          startupWalletAddress: startup.walletAddress,
+                          investorWalletAddress: walletAddress
+                        }
+                      }).catch(err => {
+                        console.error("Failed to record contract:", err);
+                      });
+                      
+                      toast({
+                        title: "Smart Contract Deployed",
+                        description: "Your milestone-based investment contract has been deployed successfully.",
+                      });
+                    }}
+                    onSuccess={() => {
+                      toast({
+                        title: "Contract Funded",
+                        description: `Your milestone-based investment in ${startup.name} has been set up successfully.`,
+                      });
+                      onSuccess();
+                      onClose();
+                    }}
+                    onWalletConnect={(address) => {
+                      setWalletAddress(address);
+                      console.log("Wallet connected for milestone contract:", address);
+                    }}
+                  />
                 </TabsContent>
               </Tabs>
             </div>

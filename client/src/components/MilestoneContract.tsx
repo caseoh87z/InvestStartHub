@@ -54,6 +54,7 @@ interface MilestoneContractProps {
   existingContractAddress?: string;
   onContractCreated?: (contractAddress: string) => void;
   onSuccess?: () => void;
+  onWalletConnect?: (address: string) => void;
 }
 
 export function MilestoneContract({
@@ -62,7 +63,8 @@ export function MilestoneContract({
   investorWalletAddress,
   existingContractAddress,
   onContractCreated,
-  onSuccess
+  onSuccess,
+  onWalletConnect
 }: MilestoneContractProps) {
   const [milestones, setMilestones] = useState<Milestone[]>([{ description: '', amount: '' }]);
   const [contractAddress, setContractAddress] = useState<string>(existingContractAddress || '');
