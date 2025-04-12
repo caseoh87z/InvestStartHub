@@ -131,6 +131,7 @@ const AuthPage: React.FC = () => {
         
         const registerData = {
           email,
+          username,
           password,
           role,
           walletAddress: walletAddress || undefined

@@ -21,6 +21,7 @@ interface NavBarProps {
 interface DecodedUser {
   id?: string;
   email: string;
+  username?: string;
   role: 'founder' | 'investor';
   iat?: number;
   exp?: number;
@@ -128,7 +129,9 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>{user ? getNameInitials(user.email || '') : 'U'}</AvatarFallback>
+                        <AvatarFallback>
+                          {user ? getNameInitials(user.username || user.email || '') : 'U'}
+                        </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
@@ -136,7 +139,14 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                     {user ? (
                       <>
                         <DropdownMenuLabel>
-                          {user.email}
+                          {user.username ? (
+                            <>
+                              <span className="font-medium">{user.username}</span>
+                              <div className="text-xs text-gray-500">{user.email}</div>
+                            </>
+                          ) : (
+                            user.email
+                          )}
                           <div className="text-xs text-gray-500 mt-1">
                             {user.role === 'founder' ? 'Founder' : 'Investor'}
                           </div>
