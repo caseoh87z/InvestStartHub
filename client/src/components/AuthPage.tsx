@@ -55,25 +55,12 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  // Helper function to wait for auth to be fully initialized before navigation
-  const waitForAuthAndNavigate = (targetUrl: string) => {
-    const checkAndNavigate = () => {
-      console.log("Checking auth state before navigation:");
-      console.log("- Auth initialized:", authInitialized);
-      console.log("- Is authenticated:", isAuth);
-      console.log("- Auth loading:", authLoading);
-      
-      if (authInitialized && isAuth && !authLoading) {
-        console.log("Auth is fully initialized, navigating to:", targetUrl);
-        navigate(targetUrl);
-      } else {
-        console.log("Auth not ready yet, waiting another 500ms...");
-        setTimeout(checkAndNavigate, 500);
-      }
-    };
+  // Helper function for immediate navigation after auth
+  const navigateToTarget = (targetUrl: string) => {
+    console.log("Directly navigating to:", targetUrl);
     
-    // Start checking after a short delay
-    setTimeout(checkAndNavigate, 500);
+    // Use window.location for a full page navigation that will pick up the auth state
+    window.location.href = targetUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,8 +107,8 @@ const AuthPage: React.FC = () => {
             description: "Preparing your dashboard...",
           });
           
-          // Wait for auth to be fully initialized before navigating
-          waitForAuthAndNavigate(targetUrl);
+          // Navigate immediately to the appropriate dashboard 
+          navigateToTarget(targetUrl);
         } else {
           throw new Error("Invalid response from server");
         }
@@ -160,8 +147,8 @@ const AuthPage: React.FC = () => {
             description: "Preparing your dashboard...",
           });
           
-          // Wait for auth to be fully initialized before navigating
-          waitForAuthAndNavigate(targetUrl);
+          // Navigate immediately to the appropriate dashboard
+          navigateToTarget(targetUrl);
         } else {
           throw new Error("Invalid response from server");
         }
