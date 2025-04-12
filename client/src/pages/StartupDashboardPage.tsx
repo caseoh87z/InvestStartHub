@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
 import NavBar from '@/components/NavBar';
 import StartupDashboard from '@/components/StartupDashboard';
+import { DocumentType } from '@/components/DocumentUploader';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -103,11 +104,10 @@ const StartupDashboardPage: React.FC = () => {
   // Update startup profile mutation
   const updateStartupMutation = useMutation({
     mutationFn: async (updatedStartup: Partial<typeof startup>) => {
-      const res = await apiRequest(`/api/startups/${startup.id}`, {
+      return await apiRequest(`/api/startups/${startup.id}`, {
         method: 'PUT',
         data: updatedStartup
       });
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/startups/user', user?.id] });
@@ -132,7 +132,7 @@ const StartupDashboardPage: React.FC = () => {
   };
 
   // Handle document upload
-  const handleDocumentUpload = async (file: File, documentType: string) => {
+  const handleDocumentUpload = async (file: File, documentType: DocumentType) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('startupId', startup.id.toString());
