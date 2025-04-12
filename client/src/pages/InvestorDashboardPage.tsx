@@ -10,87 +10,118 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { getCurrentAccount } from '@/lib/web3';
 
 const InvestorDashboardPage: React.FC = () => {
-  const { user, isLoading: authLoading, isAuth, authInitialized } = useAuth();
-  const { toast } = useToast();
-  const [location, navigate] = useLocation();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [startups, setStartups] = useState<any[]>([]);
+  const [startupsError, setStartupsError] = useState<Error | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   
-  // Log the auth state for debugging
-  console.log("InvestorDashboardPage - Auth state:", { 
-    authLoading, 
-    isAuth, 
-    authInitialized,
-    userEmail: user?.email 
-  });
+  const { toast } = useToast();
+  const [location, navigate] = useLocation();
   
-  // Fetch startups data - only enabled when auth state is settled
-  const { 
-    data: startups = [], 
-    isLoading: startupsLoading, 
-    error: startupsError 
-  } = useQuery({
-    queryKey: ['/api/startups'],
-    queryFn: async () => {
-      const token = localStorage.getItem('token');
-      console.log('Fetching startups with token:', token ? 'Token exists' : 'No token');
-      
-      const res = await fetch('/api/startups', {
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  // Simple direct authentication check
+  const [user, setUser] = useState<any>(null);
+  
+  // Load startups directly without waiting for authInitialized
+  React.useEffect(() => {
+    console.log("InvestorDashboardPage - Loading startups directly");
+    
+    const loadData = async () => {
+      setInitialLoading(true);
+      try {
+        // Get token directly
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.error("No token found, redirecting to login");
+          navigate('/auth/signin');
+          return;
         }
-      });
-      
-      if (!res.ok) {
-        console.error('Failed to fetch startups, status:', res.status);
-        throw new Error('Failed to fetch startups');
-      }
-      return res.json();
-    },
-    enabled: authInitialized // Only run this query when auth is fully initialized
-  });
-
-  // Fetch unread messages count - only enabled when authenticated
-  const { 
-    data: messagesData, 
-    isLoading: messagesLoading 
-  } = useQuery({
-    queryKey: ['/api/messages/unread/count'],
-    queryFn: async () => {
-      const token = localStorage.getItem('token');
-      console.log('Fetching messages with token:', token ? 'Token exists' : 'No token');
-      
-      const res = await fetch('/api/messages/unread/count', {
-        headers: {
-          'Authorization': `Bearer ${token}`
+        
+        // Try to decode token to get user info
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const userData = JSON.parse(jsonPayload);
+          setUser(userData);
+          console.log("User data from token:", userData);
+        } catch (e) {
+          console.error("Error decoding token", e);
         }
-      });
-      
-      if (!res.ok) {
-        console.error('Failed to fetch messages, status:', res.status);
-        throw new Error('Failed to fetch unread messages');
+        
+        // Fetch startups directly
+        console.log('Fetching startups with token:', token ? 'Token exists' : 'No token');
+        const res = await fetch('/api/startups', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!res.ok) {
+          console.error('Failed to fetch startups, status:', res.status);
+          throw new Error('Failed to fetch startups');
+        }
+        
+        const data = await res.json();
+        console.log("Startups data loaded:", data);
+        setStartups(data);
+      } catch (error) {
+        console.error("Error loading startups:", error);
+        setStartupsError(error instanceof Error ? error : new Error('Unknown error'));
+        toast({
+          title: "Error loading startups",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      } finally {
+        setInitialLoading(false);
       }
-      return res.json();
-    },
-    enabled: isAuth // Only run this query when the user is authenticated
-  });
+    };
+    
+    loadData();
+  }, [navigate, toast]);
 
   // Check if user already has a wallet connected
   React.useEffect(() => {
     const checkWallet = async () => {
-      const account = await getCurrentAccount();
-      if (account) {
-        setWalletAddress(account);
+      try {
+        const account = await getCurrentAccount();
+        if (account) {
+          setWalletAddress(account);
+        }
+      } catch (e) {
+        console.error("Error checking wallet", e);
       }
     };
     
     checkWallet();
   }, []);
 
-  // Handle investment
-  const handleInvest = () => {
-    // This will be called after successful investment
-    queryClient.invalidateQueries({ queryKey: ['/api/startups'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/transactions/investor'] });
+  // Handle investment - will reload data
+  const handleInvest = async () => {
+    // Reload the startups data
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+      const res = await fetch('/api/startups', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setStartups(data);
+      }
+    } catch (e) {
+      console.error("Error refreshing startup data", e);
+    }
   };
 
   // Handle chat with founder
@@ -99,29 +130,15 @@ const InvestorDashboardPage: React.FC = () => {
     navigate(`/messages/${startupId}`);
   };
 
-  // Auth loading state
-  if (authLoading) {
+  // Initial loading state
+  if (initialLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <NavBar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-            <p className="text-gray-600 text-center">Preparing your dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Startups loading state - but only show if auth is complete
-  if (!authLoading && startupsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <NavBar />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <p className="text-gray-600 text-center">Loading your dashboard...</p>
           </div>
         </div>
       </div>
@@ -141,9 +158,8 @@ const InvestorDashboardPage: React.FC = () => {
             <button 
               className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
               onClick={() => {
-                // Invalidate both auth and startups queries
-                queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-                queryClient.invalidateQueries({ queryKey: ['/api/startups'] });
+                // Reload the page to retry
+                window.location.reload();
               }}
             >
               Retry

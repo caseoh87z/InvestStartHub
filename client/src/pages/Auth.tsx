@@ -2,23 +2,44 @@ import React, { useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
 import AuthPage from '@/components/AuthPage';
-import { useAuth } from '@/lib/context/AuthContext';
 
 const Auth: React.FC = () => {
   const { type } = useParams();
   const [location, navigate] = useLocation();
-  const { isAuth, user, authInitialized } = useAuth();
 
-  // Redirect if already authenticated, but only after auth state is fully initialized
+  // Simple redirect if there's a token
   useEffect(() => {
-    console.log("Auth page - auth state:", { isAuth, user, authInitialized });
-    if (authInitialized && isAuth && user) {
-      console.log("Auth page - user already authenticated, redirecting to dashboard");
-      // Redirect based on user role
-      const targetUrl = user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-      navigate(targetUrl);
+    console.log("Auth page - checking for token");
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      console.log("Auth page - token found, decoding role");
+      
+      try {
+        // Get role from token
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(
+          decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          )
+        );
+        
+        // Redirect based on user role if found in token
+        const role = payload.role;
+        console.log("Auth page - user already authenticated, role:", role);
+        
+        const targetUrl = role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
+        navigate(targetUrl);
+      } catch (e) {
+        console.error("Error decoding token:", e);
+        // If we can't decode the token, still allow access to auth page
+      }
     }
-  }, [isAuth, user, authInitialized, navigate]);
+  }, [navigate]);
 
   // Validate auth type
   const validType = type === 'signin' || type === 'signup';

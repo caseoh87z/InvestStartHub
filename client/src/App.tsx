@@ -19,84 +19,32 @@ import { useEffect } from "react";
 
 // Protected route component that requires authentication
 const ProtectedRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>, path: string }) => {
-  const { isAuth, isLoading, user, authInitialized } = useAuth();
   const [, navigate] = useLocation();
   
-  // Set a timeout to prevent the loading state from lasting forever
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log(`ProtectedRoute[${rest.path}]: auth state =`, { 
-      isAuth, 
-      isLoading, 
-      authInitialized, 
-      hasToken: !!token,
-      userEmail: user?.email 
-    });
-    
-    // Only redirect if the auth state is fully initialized, and we're not authenticated and have no token
-    if (authInitialized && !isLoading && !isAuth && !token) {
-      console.log("ProtectedRoute: User not authenticated, redirecting to login");
-      navigate('/auth/signin');
-    }
-    
-    // No need for a loading timeout since we now have clear auth initialization state
-    
-  }, [isAuth, isLoading, authInitialized, user, navigate, rest.path]);
-  
-  // Return a component function that respects authentication state
+  // Simple function to render the route
   return (
     <Route
       {...rest}
       component={(props: any) => {
-        // Get token directly to be extra safe
+        // Check token directly
         const token = localStorage.getItem('token');
         
-        // If auth is not initialized yet, show a loading indicator
-        if (!authInitialized) {
-          console.log(`ProtectedRoute[${rest.path}]: Auth not initialized yet, showing loading indicator`);
-          return (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h2 className="text-xl font-semibold">Initializing...</h2>
-                <p className="text-muted-foreground">Setting up your session...</p>
-              </div>
-            </div>
-          );
-        }
-        
-        // If user data is loaded (most secure case), render the component
-        if (isAuth && user) {
-          console.log(`ProtectedRoute[${rest.path}]: Auth complete, rendering component for ${user?.email}`);
+        // If we have a token, allow access to the route
+        if (token) {
+          console.log(`ProtectedRoute[${rest.path}]: Token exists, rendering protected component`);
           return <Component {...props} />;
         }
         
-        // If we have a token but auth failed (edge case), attempt to render anyway
-        if (token && !isLoading && !isAuth && authInitialized) {
-          console.log(`ProtectedRoute[${rest.path}]: Token exists but auth failed, rendering component anyway`);
-          return <Component {...props} />;
-        }
+        // No token - redirect to login
+        console.log(`ProtectedRoute[${rest.path}]: No token found, redirecting to login`);
+        navigate('/auth/signin');
         
-        // If we have a token and auth is still loading, show loading indicator
-        if (token && isLoading) {
-          console.log(`ProtectedRoute[${rest.path}]: Authentication in progress - token exists but still loading user data`);
-          return (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
-                <p className="text-muted-foreground">Please wait a moment while we prepare your dashboard.</p>
-              </div>
-            </div>
-          );
-        }
-        
-        // If auth is initialized, not loading, and we don't have a token, show login prompt
+        // Show login required message
         return (
           <div className="min-h-screen flex items-center justify-center">
             <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md text-center">
               <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
-              <p className="mb-4">You must be logged in to view this page.</p>
+              <p className="mb-4">Please log in to access this page.</p>
               <button 
                 className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
                 onClick={() => navigate('/auth/signin')}
@@ -113,20 +61,20 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
 
 function Router() {
   console.log("Rendering Router component");
-  const { isAuth, user, isLoading, authInitialized } = useAuth();
   const [location, navigate] = useLocation();
   
   useEffect(() => {
     console.log("Current location:", location);
-  }, [location]);
-
-  // Redirect authenticated users away from auth pages, but only once auth is fully initialized
-  useEffect(() => {
-    if (authInitialized && isAuth && location.startsWith('/auth')) {
-      console.log("Router: Auth initialized and user authenticated, redirecting from auth page");
-      navigate('/');
+    
+    // Simple check to redirect authenticated users away from auth pages
+    if (location.startsWith('/auth') && localStorage.getItem('token')) {
+      console.log("Router: Token found, redirecting from auth page");
+      // Check path to avoid unnecessary redirects
+      if (location !== '/auth/signin' && location !== '/auth/signup') {
+        navigate('/');
+      }
     }
-  }, [isAuth, authInitialized, location, navigate]);
+  }, [location, navigate]);
   
   // Simple routing for demo purposes
   return (
