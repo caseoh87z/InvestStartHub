@@ -24,13 +24,16 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   
+  // Get token directly from localStorage
+  const hasToken = !!localStorage.getItem('token');
+  
   // Debug logging
   console.log("NavBar: auth state =", { 
     isAuth, 
     isLoading, 
     userEmail: user?.email,
     userRole: user?.role,
-    hasToken: !!localStorage.getItem('token')
+    hasToken
   });
 
   const handleLogout = () => {
@@ -71,8 +74,8 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
           </div>
           
           <div className="flex items-center">
-            {/* Check if user is authenticated by token and user object existence */}
-            {(isAuth && user) ? (
+            {/* Check if user is authenticated by token or user object existence */}
+            {(hasToken || (isAuth && user)) ? (
               <>
                 <Button variant="ghost" size="icon" className="mr-2">
                   <Bell className="h-5 w-5" />
@@ -82,38 +85,49 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback>{getNameInitials(user.email || '')}</AvatarFallback>
+                        <AvatarFallback>{user ? getNameInitials(user.email || '') : 'U'}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>
-                      {user.email}
-                      <div className="text-xs text-gray-500 mt-1">
-                        {user.role === 'founder' ? 'Founder' : 'Investor'}
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    
-                    {user.role === 'founder' ? (
-                      <DropdownMenuItem onClick={() => navigate('/startup/dashboard')}>
-                        Startup Dashboard
-                      </DropdownMenuItem>
+                    {user ? (
+                      <>
+                        <DropdownMenuLabel>
+                          {user.email}
+                          <div className="text-xs text-gray-500 mt-1">
+                            {user.role === 'founder' ? 'Founder' : 'Investor'}
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        
+                        {user.role === 'founder' ? (
+                          <DropdownMenuItem onClick={() => navigate('/startup/dashboard')}>
+                            Startup Dashboard
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => navigate('/investor/dashboard')}>
+                            Investor Dashboard
+                          </DropdownMenuItem>
+                        )}
+                        
+                        <DropdownMenuItem onClick={() => navigate('/messages')}>
+                          Messages
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem onClick={() => 
+                          navigate(user.role === 'founder' ? '/startup/transactions' : '/investor/transactions')
+                        }>
+                          Transactions
+                        </DropdownMenuItem>
+                      </>
                     ) : (
-                      <DropdownMenuItem onClick={() => navigate('/investor/dashboard')}>
-                        Investor Dashboard
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuLabel>
+                          Loading user data...
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                      </>
                     )}
-                    
-                    <DropdownMenuItem onClick={() => navigate('/messages')}>
-                      Messages
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem onClick={() => 
-                      navigate(user.role === 'founder' ? '/startup/transactions' : '/investor/transactions')
-                    }>
-                      Transactions
-                    </DropdownMenuItem>
                     
                     <DropdownMenuItem onClick={() => navigate('/settings')}>
                       Settings
@@ -181,28 +195,36 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
               </div>
               
               {/* Mobile menu authentication check */}
-              {(isAuth && user) ? (
+              {(hasToken || (isAuth && user)) ? (
                 <>
-                  <div className="block px-3 py-2 rounded-md text-base font-medium text-gray-900">
-                    {user.email}
-                    <div className="text-xs text-gray-500 mt-1">
-                      {user.role === 'founder' ? 'Founder' : 'Investor'}
-                    </div>
-                  </div>
-                  
-                  {user.role === 'founder' ? (
-                    <div
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate('/startup/dashboard')}
-                    >
-                      Startup Dashboard
-                    </div>
+                  {user ? (
+                    <>
+                      <div className="block px-3 py-2 rounded-md text-base font-medium text-gray-900">
+                        {user.email}
+                        <div className="text-xs text-gray-500 mt-1">
+                          {user.role === 'founder' ? 'Founder' : 'Investor'}
+                        </div>
+                      </div>
+                      
+                      {user.role === 'founder' ? (
+                        <div
+                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => navigate('/startup/dashboard')}
+                        >
+                          Startup Dashboard
+                        </div>
+                      ) : (
+                        <div
+                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => navigate('/investor/dashboard')}
+                        >
+                          Investor Dashboard
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <div
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate('/investor/dashboard')}
-                    >
-                      Investor Dashboard
+                    <div className="block px-3 py-2 rounded-md text-base font-medium text-gray-900">
+                      Loading user data...
                     </div>
                   )}
                   <div
