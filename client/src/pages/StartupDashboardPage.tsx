@@ -23,7 +23,7 @@ const StartupDashboardPage: React.FC = () => {
     error: startupError,
     refetch: refetchStartup
   } = useQuery({
-    queryKey: ['/api/startups/user', user?._id],
+    queryKey: ['/api/startups/user', user?._id || (user?.id?.toString())],
     queryFn: async () => {
       if (!user) {
         console.log('No user found, cannot fetch startup data');
@@ -32,7 +32,7 @@ const StartupDashboardPage: React.FC = () => {
       
       // MongoDB stores user IDs as strings in the _id field, not numbers
       // Get the MongoDB ObjectID from the user object
-      const mongoId = user._id?.toString() || (typeof user.id === 'string' ? user.id : null);
+      const mongoId = user._id?.toString() || user.id?.toString();
       console.log('🔍 Fetching startup data for user:', { 
         mongoId,
         id: user.id,
@@ -44,6 +44,10 @@ const StartupDashboardPage: React.FC = () => {
         console.error("Cannot fetch startup: No valid MongoDB ID found in user object");
         return null;
       }
+      
+      // Force a print out of the current authorization header
+      console.log('Using auth token:', localStorage.getItem('token')?.substring(0, 20) + '...');
+      
       
       // Retry mechanism to ensure we get the data
       const maxRetries = 2;

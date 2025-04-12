@@ -198,6 +198,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Debug route to show all startups in the system
+  app.get("/api/debug/startups", async (req: Request, res: Response) => {
+    try {
+      const allStartups = await Startup.find({});
+      const startupDetails = allStartups.map(s => ({
+        id: s._id.toString(),
+        name: s.name,
+        userId: s.userId.toString()
+      }));
+      
+      // Get all users for reference
+      const allUsers = await User.find({}).select('-password');
+      const userDetails = allUsers.map(u => ({
+        id: u._id.toString(),
+        email: u.email,
+        role: u.role
+      }));
+      
+      res.json({
+        startups: startupDetails,
+        users: userDetails,
+        totalStartups: allStartups.length,
+        totalUsers: allUsers.length
+      });
+    } catch (error) {
+      log(`Debug startups error: ${error}`, 'api');
+      res.status(500).json({ message: "Error retrieving debug data" });
+    }
+  });
+
   app.get("/api/startups/user/:userId", async (req: Request, res: Response) => {
     try {
       const userId = req.params.userId;
@@ -225,8 +255,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         log(`Comparing with: ${userObjectId}`, 'api');
         
         // For debug, let's log all user IDs in the system
-        const userIds = allStartups.map(s => s.userId.toString());
-        log(`All startup userIds in the system: ${JSON.stringify(userIds)}`, 'api');
+        const userIds = allStartups.map(s => ({ 
+          startupId: s._id.toString(),
+          userId: s.userId.toString(),
+          name: s.name 
+        }));
+        log(`All startups in the system: ${JSON.stringify(userIds)}`, 'api');
+        
+        // Check if any startup has this userId by string comparison
+        const matchingStartups = allStartups.filter(s => s.userId.toString() === userId);
+        if (matchingStartups.length > 0) {
+          log(`Found ${matchingStartups.length} startups by string comparison`, 'api');
+        } else {
+          log(`No startups found by string comparison for userId: ${userId}`, 'api');
+        }
       }
       
       // Now perform the actual query for this user's startup using the ObjectID
