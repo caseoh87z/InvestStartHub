@@ -99,6 +99,10 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                       Transactions
                     </DropdownMenuItem>
                     
+                    <DropdownMenuItem onClick={() => navigate('/settings')}>
+                      Settings
+                    </DropdownMenuItem>
+                    
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>
                       Log out
@@ -177,6 +181,12 @@ const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
                     onClick={() => navigate('/messages')}
                   >
                     Messages
+                  </div>
+                  <div
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate('/settings')}
+                  >
+                    Settings
                   </div>
                   <div
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer"

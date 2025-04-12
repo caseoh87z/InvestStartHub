@@ -18,16 +18,12 @@ export async function apiRequest<T = any>(
   // Get the authentication token from localStorage
   const token = localStorage.getItem('token');
   
-  // Prepare headers
+  // Prepare headers with authorization if token exists
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    ...(options?.headers || {})
+    ...(options?.headers || {}),
+    ...(token ? { "Authorization": `Bearer ${token}` } : {})
   };
-  
-  // Add Authorization header if token exists
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   const res = await fetch(url, {
     method: options?.method || 'GET',
@@ -49,13 +45,10 @@ export const getQueryFn: <T>(options: {
     // Get the authentication token from localStorage
     const token = localStorage.getItem('token');
     
-    // Prepare headers
-    const headers: HeadersInit = {};
-    
-    // Add Authorization header if token exists
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+    // Prepare headers with authorization if token exists
+    const headers: HeadersInit = {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    };
     
     const res = await fetch(queryKey[0] as string, {
       headers,

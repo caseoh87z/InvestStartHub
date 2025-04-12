@@ -152,37 +152,73 @@ router.post('/verify-wallet', async (req: Request, res: Response) => {
       });
     }
 
-    const { walletAddress, userId } = req.body;
+    const { walletAddress } = req.body;
     
     if (!walletAddress) {
-      return res.status(400).json({ message: 'Wallet address is required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Wallet address is required' 
+      });
+    }
+    
+    // Get user ID from token
+    const authHeader = req.headers.authorization;
+    let userId;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+        userId = decoded.id;
+      } catch (error) {
+        return res.status(401).json({ 
+          success: false,
+          message: 'Invalid or expired token' 
+        });
+      }
+    }
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Authentication required' 
+      });
     }
     
     // Check if wallet already exists
     const existingUser = await User.findOne({ walletAddress });
-    if (existingUser && existingUser._id && existingUser._id.toString() !== userId) {
-      return res.status(400).json({ message: 'Wallet address already in use' });
+    if (existingUser && existingUser._id.toString() !== userId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Wallet address already in use by another account' 
+      });
     }
     
-    // If userId provided, update the user
-    if (userId) {
-      const user = await User.findByIdAndUpdate(
-        userId,
-        { walletAddress },
-        { new: true }
-      ).select('-password');
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      
-      return res.json({ user });
+    // Update the user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { walletAddress },
+      { new: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'User not found' 
+      });
     }
     
-    res.json({ verified: true });
+    res.json({
+      success: true,
+      message: 'Wallet address connected successfully',
+      user
+    });
   } catch (error) {
     log(`Wallet verification error: ${error}`, 'auth');
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during wallet verification' 
+    });
   }
 });
 

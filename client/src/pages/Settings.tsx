@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,23 @@ import { Separator } from "@/components/ui/separator";
 import NavBar from '@/components/NavBar';
 import { apiRequest } from '@/lib/queryClient';
 
+// Define ethereum window extension
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
+interface WalletResponse {
+  success: boolean;
+  user: any;
+}
+
+interface PasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 const Settings: React.FC = () => {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
@@ -26,13 +43,6 @@ const Settings: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState(user?.walletAddress || '');
   const [isConnecting, setIsConnecting] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-
-  // Define ethereum window extension
-  declare global {
-    interface Window {
-      ethereum?: any;
-    }
-  }
 
   // Connect MetaMask wallet
   const connectWallet = async () => {
@@ -52,12 +62,12 @@ const Settings: React.FC = () => {
       const account = accounts[0];
       
       // Save to backend
-      const response = await apiRequest<{ success: boolean, user: any }>('/api/auth/verify-wallet', {
+      const response = await apiRequest<WalletResponse>('/api/auth/verify-wallet', {
         method: 'POST',
         data: { walletAddress: account },
       });
 
-      if (response && response.success) {
+      if (response.success) {
         setWalletAddress(account);
         updateUser({ walletAddress: account });
         toast({
@@ -99,7 +109,7 @@ const Settings: React.FC = () => {
 
     setIsChangingPassword(true);
     try {
-      const response = await apiRequest<{ success: boolean }>('/api/users/change-password', {
+      const response = await apiRequest<PasswordResponse>('/api/users/change-password', {
         method: 'POST',
         data: {
           currentPassword,
@@ -107,7 +117,7 @@ const Settings: React.FC = () => {
         },
       });
 
-      if (response && response.success) {
+      if (response.success) {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');

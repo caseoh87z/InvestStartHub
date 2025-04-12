@@ -38,6 +38,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get users" });
     }
   });
+
+  // Change password endpoint
+  app.post("/api/users/change-password", authenticate, async (req: Request, res: Response) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Current password and new password are required" 
+        });
+      }
+      
+      const user = await User.findById(req.user._id);
+      
+      if (!user) {
+        return res.status(404).json({ 
+          success: false,
+          message: "User not found" 
+        });
+      }
+      
+      // Verify current password
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Current password is incorrect" 
+        });
+      }
+      
+      // Update to new password
+      user.password = newPassword;
+      await user.save();
+      
+      res.json({ 
+        success: true,
+        message: "Password updated successfully" 
+      });
+    } catch (error) {
+      log(`Change password error: ${error}`, 'api');
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to change password" 
+      });
+    }
+  });
   
   // Startup routes
   app.post("/api/startups", authenticate, async (req: Request, res: Response) => {
