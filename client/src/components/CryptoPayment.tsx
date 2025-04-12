@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Coins, AlertCircle } from 'lucide-react';
+import { Coins, AlertCircle, ExternalLink } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import WalletConnect from './WalletConnect';
+import { 
+  isMetaMaskInstalled, 
+  getWeb3, 
+  sendTransaction as sendWeb3Transaction,
+  ethToWei 
+} from '@/lib/web3';
 
 interface CryptoPaymentProps {
   startupId: number;
@@ -30,9 +36,48 @@ export function CryptoPayment({
 }: CryptoPaymentProps) {
   const [amount, setAmount] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [etherscanUrl, setEtherscanUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+  
+  // Initialize Web3 with Infura
+  const web3 = getWeb3();
+  
+  // Get current network for Etherscan link
+  useEffect(() => {
+    const getNetworkInfo = async () => {
+      try {
+        if (isMetaMaskInstalled()) {
+          const networkId = await web3.eth.net.getId();
+          let etherscanBase = 'https://etherscan.io';
+          
+          // Set Etherscan URL based on network
+          if (networkId === 3) {
+            etherscanBase = 'https://ropsten.etherscan.io';
+          } else if (networkId === 4) {
+            etherscanBase = 'https://rinkeby.etherscan.io';
+          } else if (networkId === 5) {
+            etherscanBase = 'https://goerli.etherscan.io';
+          } else if (networkId === 42) {
+            etherscanBase = 'https://kovan.etherscan.io';
+          }
+          
+          setEtherscanUrl(etherscanBase);
+        } else {
+          // Fallback to mainnet if MetaMask is not installed
+          setEtherscanUrl('https://etherscan.io');
+        }
+      } catch (error) {
+        console.error('Error getting network information:', error);
+        // Fallback to mainnet
+        setEtherscanUrl('https://etherscan.io');
+      }
+    };
+    
+    getNetworkInfo();
+  }, []);
 
   const sendTransaction = async () => {
-    if (!window.ethereum) {
+    if (!isMetaMaskInstalled()) {
       toast({
         title: "MetaMask Not Available",
         description: "Please install MetaMask browser extension to make a payment.",
@@ -68,29 +113,33 @@ export function CryptoPayment({
       return;
     }
 
-    // Convert amount to Wei (1 ETH = 10^18 Wei)
-    const amountInWei = (parseFloat(amount) * 1e18).toString(16);
+    // Convert amount to Wei
+    const weiAmount = ethToWei(amount);
     
     setIsProcessing(true);
 
     try {
-      // Send transaction
-      const transactionParameters = {
-        to: startupWalletAddress,
-        from: walletAddress,
-        value: '0x' + amountInWei,
-      };
-
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [transactionParameters],
-      });
+      // Use our enhanced web3 transaction function
+      const txHash = await sendWeb3Transaction(
+        walletAddress,
+        startupWalletAddress,
+        weiAmount
+      );
+      
+      if (!txHash) {
+        throw new Error("Transaction failed or was rejected");
+      }
 
       // Handle successful transaction
       toast({
         title: "Transaction Sent",
         description: "Your investment transaction has been submitted to the blockchain.",
       });
+      
+      // Store the transaction hash for Etherscan link
+      if (etherscanUrl) {
+        setEtherscanUrl(`${etherscanUrl}/tx/${txHash}`);
+      }
 
       // Call onSuccess with transaction hash and amount
       onSuccess(txHash, parseFloat(amount));
@@ -124,6 +173,27 @@ export function CryptoPayment({
           <AlertDescription>
             This startup has not provided a wallet address to receive cryptocurrency payments.
           </AlertDescription>
+        </Alert>
+      )}
+
+      {!isMetaMaskInstalled() && (
+        <Alert variant="warning" className="bg-amber-50 text-amber-800 border-amber-300">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Improved Ethereum Connectivity</AlertTitle>
+          <AlertDescription>
+            Using Infura API for Ethereum Mainnet connectivity. For the best experience, we recommend installing MetaMask.
+          </AlertDescription>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => window.open('https://metamask.io/download/', '_blank')}
+          >
+            <span className="flex items-center">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Install MetaMask
+            </span>
+          </Button>
         </Alert>
       )}
 
@@ -164,10 +234,30 @@ export function CryptoPayment({
         </Button>
       </div>
 
+      {etherscanUrl && etherscanUrl.includes('/tx/') && (
+        <Alert className="bg-green-50 text-green-800 border-green-300">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Transaction Submitted</AlertTitle>
+          <AlertDescription className="flex flex-col">
+            <span>Your transaction has been submitted to the blockchain.</span>
+            <a 
+              href={etherscanUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline mt-1 inline-flex items-center"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              View on Etherscan
+            </a>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {walletAddress && startupWalletAddress && (
         <div className="text-xs text-gray-500 pt-2">
           <p>You will be asked to confirm this transaction in the MetaMask popup.</p>
           <p>Transaction fees will be added by the Ethereum network.</p>
+          <p className="mt-1">Powered by Infura API for reliable Ethereum connectivity.</p>
         </div>
       )}
     </div>

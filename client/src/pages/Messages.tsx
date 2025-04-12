@@ -47,7 +47,7 @@ const Messages: React.FC = () => {
                 currentUser={{
                   id: user.id.toString(),
                   email: user.email,
-                  role: user.role
+                  role: (user.role as 'founder' | 'investor')
                 }}
               />
             )}

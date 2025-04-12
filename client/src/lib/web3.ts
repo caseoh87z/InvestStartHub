@@ -1,3 +1,20 @@
+import Web3 from 'web3';
+
+// Infura API key for connecting to the Ethereum Mainnet
+const INFURA_API_KEY = '27c8c3b265ba4dffacb753892b605d46';
+const INFURA_ENDPOINT = `https://mainnet.infura.io/v3/${INFURA_API_KEY}`;
+
+// Initialize Web3 with Infura provider as fallback
+export const getWeb3 = () => {
+  if (typeof window !== 'undefined' && typeof (window as any).ethereum !== 'undefined') {
+    // Use MetaMask provider when available
+    return new Web3((window as any).ethereum);
+  } else {
+    // Fallback to Infura when MetaMask is not available
+    return new Web3(new Web3.providers.HttpProvider(INFURA_ENDPOINT));
+  }
+};
+
 interface Window {
   ethereum?: {
     isMetaMask?: boolean;
@@ -71,23 +88,45 @@ export const sendTransaction = async (
   value: string,
 ): Promise<string | null> => {
   try {
-    if (!isMetaMaskInstalled()) {
+    if (isMetaMaskInstalled()) {
+      // Use MetaMask for transaction if available
+      const transactionParameters = {
+        from,
+        to,
+        value,
+        gas: '0x5208', // 21000 in hex
+      };
+
+      const txHash = await (window as Window).ethereum!.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+      
+      return txHash;
+    } else {
+      // Fallback to Infura when MetaMask is not available
+      // Note: This requires a private key for signing transactions
+      // which is not recommended in the browser for security reasons
+      // This is just a placeholder to show how it could work
+      console.warn('MetaMask not installed, using Infura fallback');
+      
+      // In a real implementation, you might handle this differently
+      // such as redirecting to a server-side transaction or showing an error
+      
+      // Get the Web3 instance with Infura provider
+      const web3 = getWeb3();
+      
+      // For demo purposes, we'll just log that we're attempting to use Infura
+      // but return null since we can't sign transactions without a private key
+      console.log('Attempted to use Infura for transaction:', {
+        from,
+        to,
+        value,
+        gas: '0x5208'
+      });
+      
       return null;
     }
-
-    const transactionParameters = {
-      from,
-      to,
-      value,
-      gas: '0x5208', // 21000 in hex
-    };
-
-    const txHash = await (window as Window).ethereum!.request({
-      method: 'eth_sendTransaction',
-      params: [transactionParameters],
-    });
-    
-    return txHash;
   } catch (error) {
     console.error('Error sending transaction:', error);
     return null;

@@ -27,14 +27,14 @@ import MessageChat from './MessageChat';
 interface User {
   id: string;
   email: string;
-  role: 'founder' | 'investor';
+  role: 'founder' | 'investor' | string;
 }
 
 interface Contact {
   id: string;
   name: string;
   email: string;
-  role: 'founder' | 'investor';
+  role: 'founder' | 'investor' | string;
   lastMessage?: string;
   lastMessageTime?: string;
   unreadCount?: number;
