@@ -198,25 +198,27 @@ const StartupDashboardPage: React.FC = () => {
     }
   }, [refetchStartup, queryClient]);
   
-  // Redirect to startup creation if no startup exists - but with a delay to prevent redirect loops
-  // and only if not coming from the creation page
+  // Modified: Only check for startup redirect once on initial mount
   useEffect(() => {
-    const isComingFromCreation = sessionStorage.getItem('startup_created') === 'true';
+    // Skip the redirect logic entirely if this session flag is set
+    // This prevents any redirect attempts after we've successfully created a startup
+    if (sessionStorage.getItem('startup_created') === 'true') {
+      console.log('Coming from startup creation, skipping redirect check');
+      return;
+    }
     
-    // Only redirect if: 
-    // 1. Not loading
-    // 2. No startup found
-    // 3. No error occurred
-    // 4. Not coming directly from startup creation
-    if (!startupLoading && !startup && !startupError && !isComingFromCreation) {
-      // Add a timeout to make sure we don't redirect too quickly before data is loaded
-      const redirectTimer = setTimeout(() => {
-        console.log('No startup found and not coming from creation, redirecting to create page');
+    // Define a variable to track if we've already attempted to redirect
+    let hasAttemptedRedirect = false;
+    
+    // Only check for startup existence if not loading and no error
+    if (!startupLoading && !startupError) {
+      if (!startup && !hasAttemptedRedirect) {
+        console.log('No startup found, redirecting to create page');
+        hasAttemptedRedirect = true; // Mark that we've attempted to redirect
         navigate('/startup/create');
-      }, 1000);
-      
-      // Clean up timeout if component unmounts
-      return () => clearTimeout(redirectTimer);
+      } else if (startup) {
+        console.log('Startup found:', startup.name);
+      }
     }
   }, [startup, startupLoading, startupError, navigate]);
 

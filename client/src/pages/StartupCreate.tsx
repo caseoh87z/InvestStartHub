@@ -235,18 +235,29 @@ const StartupCreate: React.FC = () => {
         description: "Your startup profile has been created. You can now manage your profile and receive investments.",
       });
       
-      // Force a direct redirect to the dashboard after 1000ms
+      // Modified: Set flag first, then force an immediate reload and redirect
+      // This is a stronger approach to ensure clean state on redirect
+      
+      // 1. Set a flag in sessionStorage to signal we're coming from create page
+      // This will prevent the dashboard from redirecting back here
+      sessionStorage.setItem('startup_created', 'true');
+      console.log('Setting startup_created flag:', true);
+      
+      // 2. Pre-invalidate queries to ensure fresh data on the dashboard
+      queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
+      
+      // 3. Force direct navigation to dashboard
+      console.log('Redirecting to dashboard after successful startup creation');
+      
+      // 4. Wait for a moment to ensure the previous operations complete
       setTimeout(() => {
-        // 1. Pre-invalidate queries to ensure fresh data on the dashboard
-        queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
-        
-        // 2. Set a flag in sessionStorage to signal we're coming from create page
-        sessionStorage.setItem('startup_created', 'true');
-        
-        // 3. Use the navigate function directly instead of a programmatic click
-        console.log('Redirecting to dashboard after successful startup creation');
-        navigate('/startup/dashboard');
-      }, 1000);
+        // Give this a high priority by moving it to the top of the call stack
+        Promise.resolve().then(() => {
+          // Use window.location for a hard navigation instead of wouter navigate
+          // This ensures a fresh page load and clean React state
+          window.location.href = '/startup/dashboard';
+        });
+      }, 500);
       
     } catch (error) {
       console.error('Create startup error:', error);

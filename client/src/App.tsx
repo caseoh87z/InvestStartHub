@@ -76,6 +76,18 @@ function Router() {
     }
   }, [location, navigate]);
   
+  // Emergency fix for redirect loop between create and dashboard
+  useEffect(() => {
+    // Check if we're on the dashboard page
+    if (location === '/startup/dashboard') {
+      console.log('On dashboard page - ensuring startup_created flag is set to prevent redirects');
+      
+      // Force the session storage flag to persist for this session
+      // to prevent any accidental redirects back to creation page
+      sessionStorage.setItem('startup_created', 'true');
+    }
+  }, [location]);
+  
   // Simple routing for demo purposes
   return (
     <Switch>
