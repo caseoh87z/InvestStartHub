@@ -127,9 +127,16 @@ const StartupCard: React.FC<StartupCardProps> = ({
                   variant="outline"
                   className="flex-1 flex items-center justify-center"
                   onClick={() => {
-                    // We need to use window.location.href to ensure a full page navigation
-                    // This is a protected route so the auth check should work correctly
-                    window.location.href = `/startup/details/${id}`;
+                    // First make sure the token is available in localStorage
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                      // Navigate with token in place for protected route
+                      window.location.href = `/startup/details/${id}`;
+                    } else {
+                      // Without token, save the URL to return to after login
+                      localStorage.setItem('redirectAfterLogin', `/startup/details/${id}`);
+                      window.location.href = '/auth/signin';
+                    }
                   }}
                 >
                   <i className="fas fa-eye mr-2"></i>

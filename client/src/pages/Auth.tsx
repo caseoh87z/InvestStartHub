@@ -28,12 +28,22 @@ const Auth: React.FC = () => {
           )
         );
         
-        // Redirect based on user role if found in token
-        const role = payload.role;
-        console.log("Auth page - user already authenticated, role:", role);
+        // Check for saved redirect URL after login
+        const savedRedirect = localStorage.getItem('redirectAfterLogin');
         
-        const targetUrl = role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-        navigate(targetUrl);
+        if (savedRedirect) {
+          console.log("Auth page - redirecting to saved URL:", savedRedirect);
+          // Clear the saved redirect to prevent future unexpected redirects
+          localStorage.removeItem('redirectAfterLogin');
+          window.location.href = savedRedirect;
+        } else {
+          // Normal role-based redirect
+          const role = payload.role;
+          console.log("Auth page - user already authenticated, role:", role);
+          
+          const targetUrl = role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
+          navigate(targetUrl);
+        }
       } catch (e) {
         console.error("Error decoding token:", e);
         // If we can't decode the token, still allow access to auth page

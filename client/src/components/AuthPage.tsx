@@ -97,18 +97,37 @@ const AuthPage: React.FC = () => {
             description: "Welcome back to LaunchBlocks!",
           });
           
-          // Determine target URL
-          const targetUrl = loginResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
-          console.log("Preparing navigation to dashboard:", targetUrl);
+          // Check for saved redirect from protected pages
+          const savedRedirect = localStorage.getItem('redirectAfterLogin');
           
-          // Add a waiting message
-          toast({
-            title: "Success",
-            description: "Preparing your dashboard...",
-          });
-          
-          // Navigate immediately to the appropriate dashboard 
-          navigateToTarget(targetUrl);
+          if (savedRedirect) {
+            console.log("Auth - redirecting to saved URL after login:", savedRedirect);
+            // Clear the saved redirect
+            localStorage.removeItem('redirectAfterLogin');
+            
+            toast({
+              title: "Success",
+              description: "Redirecting you to your requested page...",
+            });
+            
+            // Use a slight delay to ensure the toast is visible
+            setTimeout(() => {
+              window.location.href = savedRedirect;
+            }, 500);
+          } else {
+            // Normal dashboard redirect
+            const targetUrl = loginResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
+            console.log("Preparing navigation to dashboard:", targetUrl);
+            
+            // Add a waiting message
+            toast({
+              title: "Success",
+              description: "Preparing your dashboard...",
+            });
+            
+            // Navigate immediately to the appropriate dashboard 
+            navigateToTarget(targetUrl);
+          }
         } else {
           throw new Error("Invalid response from server");
         }

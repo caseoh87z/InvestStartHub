@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
 import NavBar from '@/components/NavBar';
