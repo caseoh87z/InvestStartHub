@@ -6,14 +6,28 @@ import { useAuth } from '@/lib/context/AuthContext';
 import MessageCenter from '@/components/MessageCenter';
 
 const Messages: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isLoading, isAuth } = useAuth();
   const [location, setLocation] = useLocation();
 
   // Parse URL parameters to get userId if present
   const params = new URLSearchParams(window.location.search);
   const initialContactId = params.get('userId');
 
-  if (!user) {
+  // Show loading state when authentication status is being determined
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold">Loading...</h2>
+          <p className="text-muted-foreground">Please wait while we retrieve your data.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not loading and no user, then user is definitely not authenticated
+  if (!isLoading && !isAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

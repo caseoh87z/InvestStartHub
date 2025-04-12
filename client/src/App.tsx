@@ -44,36 +44,49 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
         // Get token directly to be extra safe
         const token = localStorage.getItem('token');
         
-        // If we have a token, we should always render the protected component
-        // This is a safety measure to ensure the component renders even if auth context
-        // is still loading but we know a token exists
+        // If we have a token or the user is authenticated, we should render the protected component
         if (token || (isAuth && user)) {
           if (token) {
             console.log(`ProtectedRoute[${rest.path}]: Rendering protected component - token exists`);
           } else {
             console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user?.email}`);
           }
-          return <Component {...props} />;
+          
+          // Even if we have a token, make sure we only render when the user data is actually loaded
+          // or when there's no isLoading flag anymore
+          if (user || !isLoading) {
+            return <Component {...props} />;
+          }
         }
         
-        // Show loading only briefly when a token exists but auth state is still loading
-        if (isLoading) {
-          return <div className="p-8 text-center">Loading authentication...</div>;
+        // Show a nice loading state when authentication is in progress
+        if (isLoading || token) {
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <h2 className="text-xl font-semibold">Authentication in progress...</h2>
+                <p className="text-muted-foreground">Please wait while we verify your credentials.</p>
+              </div>
+            </div>
+          );
         }
         
         // Otherwise show a message that the user needs to log in
-        return <div className="p-8 text-center">
-          <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md">
-            <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
-            <p className="mb-4">You must be logged in to view this page.</p>
-            <button 
-              className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
-              onClick={() => navigate('/auth/signin')}
-            >
-              Sign In
-            </button>
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md text-center">
+              <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
+              <p className="mb-4">You must be logged in to view this page.</p>
+              <button 
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+                onClick={() => navigate('/auth/signin')}
+              >
+                Sign In
+              </button>
+            </div>
           </div>
-        </div>;
+        );
       }}
     />
   );
