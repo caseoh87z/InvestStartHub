@@ -7,6 +7,7 @@ interface LoginCredentials {
 
 interface RegisterData {
   email: string;
+  username: string;
   password: string;
   role: 'founder' | 'investor';
   walletAddress?: string;
@@ -16,6 +17,7 @@ interface AuthResponse {
   user: {
     id: number;
     email: string;
+    username: string;
     role: string;
     walletAddress?: string;
   };
