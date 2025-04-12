@@ -19,9 +19,11 @@ interface NavBarProps {
 }
 
 const NavBar: React.FC<NavBarProps> = ({ transparent = false }) => {
-  const { user, isAuth, logout } = useAuth();
+  const { user, isAuth, isLoading, logout } = useAuth();
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  
+  console.log("NavBar: auth state =", { isAuth, isLoading, user: user?.email });
 
   const handleLogout = () => {
     logout();

@@ -91,14 +91,25 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-// Generate random avatar letters
-export function getNameInitials(name: string): string {
-  if (!name) return 'U';
+// Generate avatar initials from name or email
+export function getNameInitials(nameOrEmail: string): string {
+  if (!nameOrEmail) return 'U';
   
-  const parts = name.split(' ');
-  if (parts.length === 1) {
-    return parts[0].substring(0, 2).toUpperCase();
+  // Check if it's an email address
+  if (nameOrEmail.includes('@')) {
+    // Get the part before @ symbol
+    const emailName = nameOrEmail.split('@')[0];
+    // Return first 1-2 characters
+    return emailName.substring(0, Math.min(2, emailName.length)).toUpperCase();
   }
   
+  // Handle as a regular name
+  const parts = nameOrEmail.split(' ');
+  if (parts.length === 1) {
+    // Single word name - return first 1-2 letters
+    return parts[0].substring(0, Math.min(2, parts[0].length)).toUpperCase();
+  }
+  
+  // Multiple word name - return first letter of first and last parts
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }

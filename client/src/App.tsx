@@ -25,11 +25,20 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
   useEffect(() => {
     if (!isLoading && !isAuth) {
       console.log("User not authenticated, redirecting to login");
-      navigate('/auth/login');
+      navigate('/auth/signin');
     }
   }, [isAuth, isLoading, navigate]);
   
-  return <Route {...rest} component={Component} />;
+  // Only render the component if authenticated or still loading
+  // This prevents any flash of the protected content before redirect
+  return (
+    <Route
+      {...rest}
+      component={(props: any) => 
+        isAuth ? <Component {...props} /> : isLoading ? null : null
+      }
+    />
+  );
 };
 
 function Router() {

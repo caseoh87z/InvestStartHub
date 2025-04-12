@@ -107,10 +107,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
+  // Check if user is authenticated - safer approach
+  const isAuth = !!user;
+  
+  // Debug output to help track authentication state
+  console.log("AuthContext - Computed auth state:", { 
+    user: user?.email,
+    isAuth,
+    isLoading
+  });
+  
   const value = {
     user,
     isLoading,
-    isAuth: !!user,
+    isAuth,
     login: handleLogin,
     logout: handleLogout,
     updateUser,
