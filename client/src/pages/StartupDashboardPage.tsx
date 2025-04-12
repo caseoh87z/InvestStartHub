@@ -20,24 +20,30 @@ const StartupDashboardPage: React.FC = () => {
   const { 
     data: startup, 
     isLoading: startupLoading, 
-    error: startupError
+    error: startupError,
+    refetch: refetchStartup
   } = useQuery({
     queryKey: ['/api/startups/user', user?.id],
     queryFn: async () => {
       if (!user) return null;
+      console.log('Fetching startup data for user:', user.id);
       const res = await fetch(`/api/startups/user/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       if (res.status === 404) {
+        console.log('No startup found for user');
         return null;
       }
       if (!res.ok) {
         throw new Error('Failed to fetch startup');
       }
-      return res.json();
-    }
+      const data = await res.json();
+      console.log('Fetched startup data:', data);
+      return data;
+    },
+    staleTime: 0 // This ensures data is always refetched
   });
 
   // Fetch documents
@@ -174,6 +180,12 @@ const StartupDashboardPage: React.FC = () => {
       navigate('/startup/create');
     }
   }, [startup, startupLoading, startupError, navigate]);
+  
+  // Effect to refetch startup data when component mounts
+  useEffect(() => {
+    console.log('Dashboard mounted, refetching startup data');
+    refetchStartup();
+  }, [refetchStartup]);
 
   // Loading state
   if (startupLoading) {

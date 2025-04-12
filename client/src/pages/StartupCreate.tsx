@@ -139,10 +139,11 @@ const StartupCreate: React.FC = () => {
         description: "Your startup profile has been created. You can now manage your profile and receive investments.",
       });
       
-      // Add a brief delay to ensure the toast is shown before redirecting
-      setTimeout(() => {
-        navigate('/startup/dashboard');
-      }, 500);
+      // Update queryClient to force refetch on startup/dashboard
+      queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
+      
+      // Navigate to dashboard immediately
+      navigate('/startup/dashboard');
     },
     onError: (error) => {
       console.error('Create startup error:', error);
