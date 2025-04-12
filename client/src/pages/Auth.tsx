@@ -41,38 +41,15 @@ const Auth: React.FC = () => {
           const role = payload.role;
           console.log("Auth page - user already authenticated, role:", role);
           
-          // If founder, check if they have a startup first
+          // Simplified navigation after login - let the dashboard/create page handle redirects
           if (role === 'founder') {
-            const userId = payload.userId;
-            console.log("Auth page - checking if founder has startup");
+            console.log("Auth page - logged in as founder, will check startup existence");
             
-            // Make API call to check if founder has a startup
-            fetch(`/api/startups/user/${userId}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            })
-            .then(response => {
-              if (response.status === 404) {
-                // No startup found, redirect to create page
-                console.log("Auth page - no startup found, redirecting to create page");
-                sessionStorage.removeItem('startup_created');
-                navigate('/startup/create');
-              } else if (response.ok) {
-                // Startup found, redirect to dashboard
-                console.log("Auth page - startup found, redirecting to dashboard");
-                sessionStorage.setItem('startup_created', 'true');
-                navigate('/startup/dashboard');
-              } else {
-                // Error handling
-                console.error("Auth page - error checking startup status");
-                navigate('/startup/dashboard'); // Default to dashboard on error
-              }
-            })
-            .catch(error => {
-              console.error("Auth page - error fetching startup:", error);
-              navigate('/startup/dashboard'); // Default to dashboard on error
-            });
+            // Remove any prior redirect flags to ensure fresh state
+            localStorage.removeItem('redirect_to_create_attempted');
+            
+            // For founders, we'll navigate to dashboard and let it handle the redirect to create if needed
+            navigate('/startup/dashboard');
           } else {
             // For investors, just navigate to dashboard
             navigate('/investor/dashboard');

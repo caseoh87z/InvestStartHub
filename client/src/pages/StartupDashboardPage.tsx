@@ -198,25 +198,24 @@ const StartupDashboardPage: React.FC = () => {
     }
   }, [refetchStartup, queryClient]);
   
-  // Modified: Only check for startup redirect once on initial mount
+  // Simplified redirect check - only run once when data is loaded
   useEffect(() => {
-    // Skip the redirect logic entirely if this session flag is set
-    // This prevents any redirect attempts after we've successfully created a startup
-    if (sessionStorage.getItem('startup_created') === 'true') {
-      console.log('Coming from startup creation, skipping redirect check');
-      return;
-    }
-    
-    // Define a variable to track if we've already attempted to redirect
-    let hasAttemptedRedirect = false;
-    
-    // Only check for startup existence if not loading and no error
+    // Only when loading is done and there's no error
     if (!startupLoading && !startupError) {
-      if (!startup && !hasAttemptedRedirect) {
-        console.log('No startup found, redirecting to create page');
-        hasAttemptedRedirect = true; // Mark that we've attempted to redirect
-        navigate('/startup/create');
-      } else if (startup) {
+      if (!startup) {
+        // Check local storage for a flag to prevent redirect loops
+        const redirectAttempted = localStorage.getItem('redirect_to_create_attempted');
+        
+        if (!redirectAttempted) {
+          console.log('No startup found and no previous redirect, redirecting to create page');
+          localStorage.setItem('redirect_to_create_attempted', 'true');
+          navigate('/startup/create');
+        } else {
+          console.log('No startup but redirect already attempted. Not redirecting again to prevent loop');
+        }
+      } else {
+        // We have a startup, clear the flag
+        localStorage.removeItem('redirect_to_create_attempted');
         console.log('Startup found:', startup.name);
       }
     }

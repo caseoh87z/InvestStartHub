@@ -76,66 +76,8 @@ function Router() {
     }
   }, [location, navigate]);
   
-  // Code to check if a founder has a startup
-  useEffect(() => {
-    // Only run this for dashboard path and when authenticated
-    if (location === '/startup/dashboard' && localStorage.getItem('token')) {
-      // Check if a user is a newly registered founder without a startup
-      const checkStartupExistence = async () => {
-        try {
-          // Get the user ID from the token (this is a simplified approach)
-          const token = localStorage.getItem('token');
-          if (!token) return;
-          
-          // Get user data
-          const userResponse = await fetch('/api/users/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          if (!userResponse.ok) {
-            console.error('Failed to fetch user data');
-            return;
-          }
-          
-          const userData = await userResponse.json();
-          const userId = userData.user?._id;
-          
-          if (!userId) {
-            console.error('No user ID found');
-            return;
-          }
-          
-          // Check if user has a startup
-          const startupResponse = await fetch(`/api/startups/user/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          // If 404, user has no startup, redirect to create page
-          if (startupResponse.status === 404) {
-            console.log('No startup found for user, redirecting to create page');
-            sessionStorage.removeItem('startup_created');
-            navigate('/startup/create');
-            return;
-          }
-          
-          if (!startupResponse.ok && startupResponse.status !== 404) {
-            console.error('Error checking startup existence');
-            return;
-          }
-          
-          // If we got here, user has a startup
-          if (startupResponse.ok) {
-            console.log('User has existing startup, setting flag to prevent redirect loop');
-            sessionStorage.setItem('startup_created', 'true');
-          }
-        } catch (error) {
-          console.error('Error in startup existence check:', error);
-        }
-      };
-      
-      checkStartupExistence();
-    }
-  }, [location, navigate]);
+  // This code for startup checking was moved to the dashboard and create pages
+  // to avoid race conditions and redirect loops
   
   // Simple routing for demo purposes
   return (

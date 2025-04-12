@@ -149,13 +149,24 @@ const StartupCreate: React.FC = () => {
   // Redirect if user already has a startup
   useEffect(() => {
     if (!checkingStartup && existingStartup) {
+      // Log for debugging
+      console.log('Redirecting to dashboard - User already has startup:', existingStartup.name);
+      
+      // Remove any redirect flags
+      localStorage.removeItem('redirect_to_create_attempted');
+      
+      // Show a toast notification
       toast({
         title: "Startup already exists",
         description: "You already have a startup profile. Redirecting to dashboard.",
       });
-      navigate('/startup/dashboard');
+      
+      // Use window.location.replace for a hard redirect
+      setTimeout(() => {
+        window.location.replace('/startup/dashboard');
+      }, 500);
     }
-  }, [existingStartup, checkingStartup, navigate, toast]);
+  }, [existingStartup, checkingStartup, toast]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -235,29 +246,24 @@ const StartupCreate: React.FC = () => {
         description: "Your startup profile has been created. You can now manage your profile and receive investments.",
       });
       
-      // Modified: Set flag first, then force an immediate reload and redirect
-      // This is a stronger approach to ensure clean state on redirect
+      // Completely new approach: clear local storage flag first and hard reload
       
-      // 1. Set a flag in sessionStorage to signal we're coming from create page
-      // This will prevent the dashboard from redirecting back here
-      sessionStorage.setItem('startup_created', 'true');
-      console.log('Setting startup_created flag:', true);
+      // 1. Clear the redirect flag first to prevent any redirect loops
+      localStorage.removeItem('redirect_to_create_attempted');
+      console.log('Cleared redirect_to_create_attempted flag');
       
-      // 2. Pre-invalidate queries to ensure fresh data on the dashboard
-      queryClient.invalidateQueries({ queryKey: ['/api/startups/user'] });
-      
-      // 3. Force direct navigation to dashboard
+      // 2. Force a direct navigation to the dashboard with a forced page reload
       console.log('Redirecting to dashboard after successful startup creation');
       
-      // 4. Wait for a moment to ensure the previous operations complete
+      // 3. This is a completely fresh approach - use window.location.replace
+      // Instead of wouter navigation which stays in the SPA context
       setTimeout(() => {
-        // Give this a high priority by moving it to the top of the call stack
-        Promise.resolve().then(() => {
-          // Use window.location for a hard navigation instead of wouter navigate
-          // This ensures a fresh page load and clean React state
-          window.location.href = '/startup/dashboard';
-        });
-      }, 500);
+        // Log that we're about to redirect
+        console.log('Performing hard redirect to dashboard page');
+        
+        // Use replace to prevent back button issues
+        window.location.replace('/startup/dashboard');
+      }, 800);
       
     } catch (error) {
       console.error('Create startup error:', error);
