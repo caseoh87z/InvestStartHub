@@ -24,10 +24,12 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
   
   // Enhanced authentication check that properly redirects
   useEffect(() => {
-    // Only redirect if not loading and not authenticated
-    if (!isLoading && !isAuth) {
+    const token = localStorage.getItem('token');
+    console.log(`ProtectedRoute[${rest.path}]: token exists = ${!!token}`);
+    
+    // Only redirect if not loading and not authenticated and no token
+    if (!isLoading && !isAuth && !token) {
       console.log("ProtectedRoute: User not authenticated, redirecting to login");
-      // Force immediate redirect to auth page
       navigate('/auth/signin');
     }
   }, [isAuth, isLoading, navigate, rest.path]);
@@ -39,19 +41,39 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
     <Route
       {...rest}
       component={(props: any) => {
-        // Show nothing while authentication is loading
-        if (isLoading) {
-          return <div className="p-8 text-center">Loading...</div>;
-        }
+        // Get token directly to be extra safe
+        const token = localStorage.getItem('token');
         
-        // Render the protected component only when authenticated
-        if (isAuth && user) {
-          console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user.email}`);
+        // If we have a token, we should always render the protected component
+        // This is a safety measure to ensure the component renders even if auth context
+        // is still loading but we know a token exists
+        if (token || (isAuth && user)) {
+          if (token) {
+            console.log(`ProtectedRoute[${rest.path}]: Rendering protected component - token exists`);
+          } else {
+            console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user?.email}`);
+          }
           return <Component {...props} />;
         }
         
-        // Otherwise, render nothing (the redirect will happen via useEffect)
-        return <div className="p-8 text-center">You must be logged in to view this page. Redirecting...</div>;
+        // Show loading only briefly when a token exists but auth state is still loading
+        if (isLoading) {
+          return <div className="p-8 text-center">Loading authentication...</div>;
+        }
+        
+        // Otherwise show a message that the user needs to log in
+        return <div className="p-8 text-center">
+          <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md">
+            <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
+            <p className="mb-4">You must be logged in to view this page.</p>
+            <button 
+              className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+              onClick={() => navigate('/auth/signin')}
+            >
+              Sign In
+            </button>
+          </div>
+        </div>;
       }}
     />
   );

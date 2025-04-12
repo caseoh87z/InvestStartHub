@@ -38,51 +38,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       console.log("AuthContext - Running authentication check...");
+      setIsLoading(true);
+      
+      // Get token from localStorage
       const token = localStorage.getItem('token');
       
-      if (token) {
-        console.log("AuthContext - Token found in localStorage, attempting to parse...");
-        try {
-          // Parse JWT token to extract user data
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(
-            atob(base64)
-              .split('')
-              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-              .join('')
-          );
-          
-          const payload = JSON.parse(jsonPayload);
-          console.log("AuthContext - Successfully extracted user info from token:", payload);
-          
-          // Set user data from the token
-          const userData = {
-            id: payload.id,
-            email: payload.email,
-            role: payload.role,
-            // walletAddress might be missing from token
-            walletAddress: payload.walletAddress
-          };
-          
-          console.log("AuthContext - Setting user data:", userData);
-          setUser(userData);
-          console.log("AuthContext - User is now authenticated!");
-        } catch (error) {
-          console.error('AuthContext - Failed to parse user data from token', error);
-          // Clear invalid token
-          logout();
-          toast({
-            title: "Session expired",
-            description: "Please log in again.",
-            variant: "destructive",
-          });
-        }
-      } else {
+      if (!token) {
         console.log("AuthContext - No token found, user is not authenticated");
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
       
-      setIsLoading(false);
+      console.log("AuthContext - Token found in localStorage, attempting to validate...");
+      
+      try {
+        // Parse JWT token to extract user data
+        const base64Url = token.split('.')[1];
+        if (!base64Url) {
+          throw new Error('Invalid token format');
+        }
+        
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        
+        const payload = JSON.parse(jsonPayload);
+        console.log("AuthContext - Successfully extracted user info from token:", payload);
+        
+        // Check if token is expired
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < currentTime) {
+          throw new Error('Token expired');
+        }
+        
+        // Set auth token for API requests
+        setAuthToken(token);
+        
+        // Set user data from the token
+        const userData = {
+          id: payload.id,
+          email: payload.email,
+          role: payload.role,
+          walletAddress: payload.walletAddress
+        };
+        
+        console.log("AuthContext - Setting user data:", userData);
+        setUser(userData);
+        console.log("AuthContext - User is now authenticated!");
+        
+        // Also try to fetch the latest user data from the server
+        try {
+          const freshUserData = await getCurrentUser();
+          if (freshUserData) {
+            console.log("AuthContext - Got fresh user data from server:", freshUserData);
+            setUser(freshUserData);
+          }
+        } catch (serverError) {
+          console.warn("AuthContext - Couldn't fetch fresh user data, using token data instead", serverError);
+          // Continue with the token data if API request fails
+        }
+      } catch (error) {
+        console.error('AuthContext - Authentication error:', error);
+        // Clear invalid token
+        handleLogout();
+        toast({
+          title: "Session expired",
+          description: "Please log in again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     checkAuth();
