@@ -5,6 +5,10 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
 import { registerRoutes } from "./routes";
 import { registerAuthRoutes } from "./auth";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 app.use(express.json());
