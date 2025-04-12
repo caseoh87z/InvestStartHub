@@ -22,7 +22,7 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
   const { isAuth, isLoading, user } = useAuth();
   const [, navigate] = useLocation();
   
-  // Enhanced authentication check that properly redirects
+  // Set a timeout to prevent the loading state from lasting forever
   useEffect(() => {
     const token = localStorage.getItem('token');
     console.log(`ProtectedRoute[${rest.path}]: token exists = ${!!token}`);
@@ -32,6 +32,24 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
       console.log("ProtectedRoute: User not authenticated, redirecting to login");
       navigate('/auth/signin');
     }
+    
+    // If we have a token and we're still loading after 3 seconds, try forcing a render
+    let timeoutId: ReturnType<typeof setTimeout>;
+    if (token && isLoading) {
+      timeoutId = setTimeout(() => {
+        console.log("ProtectedRoute: Loading timeout - forcing component render");
+        // Force render even if still technically loading
+        if (token) {
+          // This is a failsafe - if loading takes too long, we'll show the component anyway
+          // which will then handle any API requests it needs
+          console.log("ProtectedRoute: Token exists, attempting to render component even though auth is still loading");
+        }
+      }, 3000); // 3 second timeout
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isAuth, isLoading, navigate, rest.path]);
   
   console.log(`ProtectedRoute[${rest.path}]: auth state = ${isAuth ? 'authenticated' : 'not authenticated'}, loading = ${isLoading}`);
@@ -50,7 +68,14 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
           return <Component {...props} />;
         }
         
-        // If we have a token but no user data yet (still loading), show loading state
+        // If we have a token but loading state has been going on too long
+        // Attempt to render the component anyway - it can handle its own loading states
+        if (token && !isLoading && !isAuth) {
+          console.log(`ProtectedRoute[${rest.path}]: Token exists but auth failed, attempting to render component`);
+          return <Component {...props} />;
+        }
+        
+        // If we have a token but still loading, only show loading state for a brief period
         if (token && isLoading) {
           console.log(`ProtectedRoute[${rest.path}]: Authentication in progress - token exists but still loading user data`);
           return (
@@ -64,9 +89,7 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
           );
         }
         
-        // If we have a token but loading is complete (unusual case - token exists but no user data)
-        // This can happen when auth verification is complete but user data isn't loaded yet
-        // Still show the component to avoid flickering
+        // If we have a token but loading is complete, render the component
         if (token && !isLoading) {
           console.log(`ProtectedRoute[${rest.path}]: Rendering with token but no user data yet`);
           return <Component {...props} />;

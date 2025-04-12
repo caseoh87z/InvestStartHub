@@ -82,11 +82,16 @@ const AuthPage: React.FC = () => {
           const targetUrl = loginResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
           console.log("Navigating to dashboard:", targetUrl);
           
-          // Add a small delay before navigation to allow auth context to update fully
+          // Add a delay before navigation to ensure auth context updates fully
+          toast({
+            title: "Success",
+            description: "Preparing your dashboard...",
+          });
+          
           setTimeout(() => {
             console.log("Navigating to dashboard after delay:", targetUrl);
             navigate(targetUrl);
-          }, 500);
+          }, 1500);
         } else {
           throw new Error("Invalid response from server");
         }
@@ -117,11 +122,16 @@ const AuthPage: React.FC = () => {
           const targetUrl = registerResponse.user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
           console.log("Navigating to dashboard:", targetUrl);
           
-          // Add a small delay before navigation to allow auth context to update fully
+          // Add a delay before navigation to ensure auth context updates fully
+          toast({
+            title: "Success",
+            description: "Preparing your dashboard...",
+          });
+          
           setTimeout(() => {
             console.log("Navigating to dashboard after delay:", targetUrl);
             navigate(targetUrl);
-          }, 500);
+          }, 1500);
         } else {
           throw new Error("Invalid response from server");
         }
