@@ -121,15 +121,40 @@ const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser, initialConta
     // If we have contacts loaded and an initialContactId was provided
     if (contacts.length > 0 && initialContactId) {
       console.log("Checking for initial contact with ID:", initialContactId);
-      const foundContact = contacts.find(c => c.id === initialContactId);
+      console.log("Available contacts:", contacts);
+      
+      // Try direct match first
+      let foundContact = contacts.find(c => c.id === initialContactId);
+      
+      // If not found, try case-insensitive match
+      if (!foundContact) {
+        foundContact = contacts.find(c => 
+          c.id.toLowerCase() === initialContactId.toLowerCase()
+        );
+      }
+      
+      // If still not found, try substring match
+      if (!foundContact && initialContactId.length > 5) {
+        foundContact = contacts.find(c => 
+          c.id.includes(initialContactId) || initialContactId.includes(c.id)
+        );
+      }
+      
       if (foundContact) {
         console.log("Found initial contact:", foundContact.name);
+        // Force to chat tab and select the contact
+        setActiveTab('chat');
         handleContactSelect(foundContact);
       } else {
         console.log("Initial contact not found in contacts list");
+        toast({
+          title: "Contact not found",
+          description: "Could not find the contact you're looking for",
+          variant: "destructive"
+        });
       }
     }
-  }, [contacts, initialContactId, handleContactSelect]);
+  }, [contacts, initialContactId, handleContactSelect, toast]);
 
   // Filter contacts based on search query
   const filteredContacts = contacts.filter(contact => 

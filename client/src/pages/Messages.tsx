@@ -15,6 +15,28 @@ const Messages: React.FC = () => {
   
   // Log for debugging
   console.log("Messages page - initialContactId from URL:", initialContactId);
+  
+  // Use a useEffect to track and handle URL changes
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const newParams = new URLSearchParams(window.location.search);
+      const newUserId = newParams.get('userId');
+      console.log("URL changed, new userId parameter:", newUserId);
+      
+      // Force reload the page if the userId parameter changes
+      if (newUserId && newUserId !== initialContactId) {
+        console.log("UserId changed, reloading page");
+        window.location.reload();
+      }
+    };
+    
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleUrlChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+    };
+  }, [initialContactId]);
 
   // Show loading state when authentication status is being determined
   if (isLoading) {

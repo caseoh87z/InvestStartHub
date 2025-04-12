@@ -128,12 +128,21 @@ const InvestorDashboardPage: React.FC = () => {
   const handleChatWithFounder = (startupId: number) => {
     // Find the startup's user ID first
     try {
+      console.log("Chat with founder clicked, startupId:", startupId);
+      console.log("Available startups:", startups);
+      
       const startupToChat = startups.find(s => s.id === startupId);
       if (startupToChat) {
-        // Instead of trying to navigate to a route that doesn't exist,
-        // go to the messages page with a query parameter
-        window.location.href = `/messages?userId=${startupToChat.userId}`;
+        console.log("Found startup to chat with:", startupToChat);
+        // Use direct navigation to messages
+        navigate('/messages');
+        
+        // Add a slight delay before setting the URL parameter to ensure the page has loaded
+        setTimeout(() => {
+          window.location.href = `/messages?userId=${startupToChat.userId}`;
+        }, 100);
       } else {
+        console.error("Could not find startup with ID:", startupId);
         toast({
           title: "Error",
           description: "Couldn't find the startup to chat with",

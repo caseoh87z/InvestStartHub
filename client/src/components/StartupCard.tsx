@@ -126,7 +126,11 @@ const StartupCard: React.FC<StartupCardProps> = ({
                 <Button 
                   variant="outline"
                   className="flex-1 flex items-center justify-center"
-                  onClick={() => window.location.href = `/startup/details/${id}`}
+                  onClick={() => {
+                    // We need to use window.location.href to ensure a full page navigation
+                    // This is a protected route so the auth check should work correctly
+                    window.location.href = `/startup/details/${id}`;
+                  }}
                 >
                   <i className="fas fa-eye mr-2"></i>
                   Details
