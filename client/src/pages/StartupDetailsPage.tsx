@@ -282,12 +282,76 @@ const StartupDetailsPage: React.FC = () => {
                       <h3 className="text-lg font-medium mb-2">Funding Progress</h3>
                       <div className="mb-1 flex justify-between text-sm">
                         <span>{formatCurrency(startup.totalRaised)} raised</span>
+                        <span>Goal: {formatCurrency(startup.totalRaised * 2)}</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="bg-primary h-2.5 rounded-full" style={{ width: `30%` }}></div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                        <div className="bg-primary h-2.5 rounded-full" style={{ width: `${Math.min(100, (startup.totalRaised / (startup.totalRaised * 2)) * 100)}%` }}></div>
+                      </div>
+                      
+                      {/* Funding trend chart */}
+                      <div className="mt-6">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Funding Trend</h4>
+                        <div className="h-32 w-full bg-gray-50 rounded-md flex items-end p-2 space-x-1">
+                          {[...Array(12)].map((_, i) => {
+                            // Generate random heights for demonstration
+                            const height = 20 + Math.random() * 60;
+                            const isLast = i === 11;
+                            const month = new Date(Date.now() - (11 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleString('default', { month: 'short' });
+                            
+                            return (
+                              <div key={i} className="flex-1 flex flex-col items-center">
+                                <div 
+                                  className={`w-full ${isLast ? 'bg-primary' : 'bg-primary/60'} rounded-t`} 
+                                  style={{ height: `${height}%` }}
+                                ></div>
+                                <div className="text-xs text-gray-500 mt-1">{month}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                     
+                    {/* Investor distribution chart */}
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium mb-3">Investor Distribution</h3>
+                      <div className="bg-white rounded-md p-4">
+                        <div className="flex space-x-2 mb-4">
+                          {/* Donut chart representation */}
+                          <div className="relative w-24 h-24">
+                            {/* Create segments */}
+                            <div className="absolute inset-0 rounded-full border-8 border-blue-500" style={{ clipPath: 'polygon(50% 50%, 100% 0, 100% 100%, 50% 100%)' }}></div>
+                            <div className="absolute inset-0 rounded-full border-8 border-green-500" style={{ clipPath: 'polygon(50% 50%, 100% 100%, 0 100%, 0 50%)' }}></div>
+                            <div className="absolute inset-0 rounded-full border-8 border-yellow-500" style={{ clipPath: 'polygon(50% 50%, 0 50%, 0 0, 50% 0)' }}></div>
+                            <div className="absolute inset-0 rounded-full border-8 border-purple-500" style={{ clipPath: 'polygon(50% 50%, 50% 0, 100% 0)' }}></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-sm font-medium">{startup.totalInvestors}</span>
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                <span className="text-xs">Angel Investors (40%)</span>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                <span className="text-xs">Retail Investors (30%)</span>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                <span className="text-xs">Institutions (20%)</span>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                                <span className="text-xs">Others (10%)</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Overview</h3>
                       <dl className="space-y-1 text-sm">

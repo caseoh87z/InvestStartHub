@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'wouter';
+import { useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -101,6 +101,7 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -220,6 +221,119 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
               />
             </div>
           </div>
+          
+          {/* Funding Analysis */}
+          <div className="px-4 sm:px-0 mt-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Funding Analysis</CardTitle>
+                <CardDescription>
+                  View your startup's funding progress and analytics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Funding Progress */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Funding Progress</h3>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span>{formatCurrency(startup.totalRaised)} raised</span>
+                      <span>Goal: {formatCurrency(startup.totalRaised * 2)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                      <div className="bg-primary h-2.5 rounded-full" style={{ width: `${Math.min(100, (startup.totalRaised / (startup.totalRaised * 2)) * 100)}%` }}></div>
+                    </div>
+                    
+                    {/* Recent milestones */}
+                    <div className="mt-6">
+                      <h4 className="text-sm font-medium mb-3 text-gray-700">Recent Funding Milestones</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                            <i className="fas fa-check"></i>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">First investor milestone reached</p>
+                            <p className="text-xs text-gray-500">{formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                            <i className="fas fa-trophy"></i>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">25% funding goal achieved</p>
+                            <p className="text-xs text-gray-500">{formatDate(new Date(Date.now() - 15 * 24 * 60 * 60 * 1000))}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Funding Trend Chart */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Funding Trend</h3>
+                    <div className="h-56 w-full bg-gray-50 rounded-md flex items-end p-2 space-x-1">
+                      {[...Array(12)].map((_, i) => {
+                        // Generate heights for demonstration
+                        const height = 10 + (i * 5) + (Math.random() * 10);
+                        const isLast = i === 11;
+                        const month = new Date(Date.now() - (11 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleString('default', { month: 'short' });
+                        
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center">
+                            <div 
+                              className={`w-full ${isLast ? 'bg-primary' : 'bg-primary/60'} rounded-t`} 
+                              style={{ height: `${height}%` }}
+                            ></div>
+                            <div className="text-xs text-gray-500 mt-1">{month}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Investor Distribution */}
+                    <div className="mt-6">
+                      <h4 className="text-sm font-medium mb-3 text-gray-700">Investor Distribution</h4>
+                      <div className="flex space-x-2">
+                        {/* Donut chart representation */}
+                        <div className="relative w-24 h-24">
+                          {/* Create segments */}
+                          <div className="absolute inset-0 rounded-full border-8 border-blue-500" style={{ clipPath: 'polygon(50% 50%, 100% 0, 100% 100%, 50% 100%)' }}></div>
+                          <div className="absolute inset-0 rounded-full border-8 border-green-500" style={{ clipPath: 'polygon(50% 50%, 100% 100%, 0 100%, 0 50%)' }}></div>
+                          <div className="absolute inset-0 rounded-full border-8 border-yellow-500" style={{ clipPath: 'polygon(50% 50%, 0 50%, 0 0, 50% 0)' }}></div>
+                          <div className="absolute inset-0 rounded-full border-8 border-purple-500" style={{ clipPath: 'polygon(50% 50%, 50% 0, 100% 0)' }}></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-sm font-medium">{startup.totalInvestors}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                              <span className="text-xs">Angel Investors (40%)</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                              <span className="text-xs">Retail Investors (30%)</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                              <span className="text-xs">Institutions (20%)</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                              <span className="text-xs">Others (10%)</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Startup Profile */}
           <div className="px-4 sm:px-0 mt-8">
@@ -306,27 +420,47 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
                 </CardDescription>
               </CardHeader>
               <div className="border-t border-gray-200">
-                <ul className="divide-y divide-gray-200">
+                <div className="px-4 py-4">
                   {documents.length > 0 ? (
-                    documents.map((doc) => (
-                      <DocumentItem
-                        key={doc.id}
-                        id={doc.id}
-                        name={doc.name}
-                        type={doc.type}
-                        documentType={doc.documentType}
-                        fileUrl={doc.fileUrl}
-                        size={doc.size}
-                        uploadedAt={doc.uploadedAt}
-                        onDelete={handleDeleteDocument}
-                      />
-                    ))
+                    <div className="space-y-6">
+                      {/* Group documents by type */}
+                      {(() => {
+                        const groupedDocs: Record<string, any[]> = {};
+                        documents.forEach((doc) => {
+                          const type = doc.documentType || 'Other';
+                          if (!groupedDocs[type]) groupedDocs[type] = [];
+                          groupedDocs[type].push(doc);
+                        });
+                        
+                        return Object.entries(groupedDocs).map(([type, docs]) => (
+                          <div key={type} className="border rounded-lg p-4">
+                            <h3 className="font-medium text-gray-900 mb-3">{type}</h3>
+                            <ul className="divide-y divide-gray-200">
+                              {docs.map((doc: any) => (
+                                <DocumentItem
+                                  key={doc.id}
+                                  id={doc.id}
+                                  name={doc.name}
+                                  type={doc.type}
+                                  documentType={doc.documentType || 'Other'}
+                                  fileUrl={doc.fileUrl}
+                                  size={doc.size}
+                                  uploadedAt={doc.uploadedAt}
+                                  onDelete={handleDeleteDocument}
+                                  canDelete={true}
+                                />
+                              ))}
+                            </ul>
+                          </div>
+                        ));
+                      })()}
+                    </div>
                   ) : (
-                    <li className="px-4 py-8 text-center text-gray-500">
+                    <div className="text-center py-8 text-gray-500">
                       No documents uploaded yet. Upload your first document to share with investors.
-                    </li>
+                    </div>
                   )}
-                </ul>
+                </div>
                 <div className="px-4 py-4 sm:px-6">
                   <Button 
                     onClick={() => setIsUploadModalOpen(true)}
@@ -349,11 +483,14 @@ const StartupDashboard: React.FC<StartupDashboardProps> = ({
                     Latest investments received for your startup.
                   </CardDescription>
                 </div>
-                <Link href="/startup/transactions">
-                  <a className="text-sm font-medium text-primary hover:text-blue-500">
-                    View all
-                  </a>
-                </Link>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  onClick={() => navigate('/startup/transactions')}
+                  className="text-primary hover:text-blue-500"
+                >
+                  View all
+                </Button>
               </CardHeader>
               <div className="border-t border-gray-200">
                 <div className="overflow-x-auto">

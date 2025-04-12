@@ -91,6 +91,8 @@ function Router() {
       {/* Investor routes */}
       <ProtectedRoute path="/investor/dashboard" component={InvestorDashboardPage} />
       <ProtectedRoute path="/investor/transactions" component={InvestorTransactions} />
+      
+      {/* Shared startup details page - accessible to both investors and founders */}
       <ProtectedRoute path="/startup/details/:id" component={StartupDetailsPage} />
       
       {/* Shared routes */}
