@@ -12,6 +12,7 @@ import { connectMetaMask } from '@/lib/web3';
 const AuthPage: React.FC = () => {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'founder' | 'investor'>('investor');
   const [rememberMe, setRememberMe] = useState(false);
@@ -241,6 +242,23 @@ const AuthPage: React.FC = () => {
                 />
               </div>
             </div>
+            
+            {!isLoginMode && (
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <div className="mt-1">
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="password">Password</Label>
