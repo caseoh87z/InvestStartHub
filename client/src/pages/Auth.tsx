@@ -7,19 +7,18 @@ import { useAuth } from '@/lib/context/AuthContext';
 const Auth: React.FC = () => {
   const { type } = useParams();
   const [location, navigate] = useLocation();
-  const { isAuth, user } = useAuth();
+  const { isAuth, user, authInitialized } = useAuth();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated, but only after auth state is fully initialized
   useEffect(() => {
-    if (isAuth) {
+    console.log("Auth page - auth state:", { isAuth, user, authInitialized });
+    if (authInitialized && isAuth && user) {
+      console.log("Auth page - user already authenticated, redirecting to dashboard");
       // Redirect based on user role
-      if (user?.role === 'founder') {
-        navigate('/startup/dashboard');
-      } else if (user?.role === 'investor') {
-        navigate('/investor/dashboard');
-      }
+      const targetUrl = user.role === 'founder' ? '/startup/dashboard' : '/investor/dashboard';
+      navigate(targetUrl);
     }
-  }, [isAuth, user, navigate]);
+  }, [isAuth, user, authInitialized, navigate]);
 
   // Validate auth type
   const validType = type === 'signin' || type === 'signup';

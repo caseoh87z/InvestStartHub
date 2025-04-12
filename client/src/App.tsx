@@ -19,40 +19,29 @@ import { useEffect } from "react";
 
 // Protected route component that requires authentication
 const ProtectedRoute = ({ component: Component, ...rest }: { component: React.ComponentType<any>, path: string }) => {
-  const { isAuth, isLoading, user } = useAuth();
+  const { isAuth, isLoading, user, authInitialized } = useAuth();
   const [, navigate] = useLocation();
   
   // Set a timeout to prevent the loading state from lasting forever
   useEffect(() => {
     const token = localStorage.getItem('token');
-    console.log(`ProtectedRoute[${rest.path}]: token exists = ${!!token}`);
+    console.log(`ProtectedRoute[${rest.path}]: auth state =`, { 
+      isAuth, 
+      isLoading, 
+      authInitialized, 
+      hasToken: !!token,
+      userEmail: user?.email 
+    });
     
-    // Only redirect if not loading and not authenticated and no token
-    if (!isLoading && !isAuth && !token) {
+    // Only redirect if the auth state is fully initialized, and we're not authenticated and have no token
+    if (authInitialized && !isLoading && !isAuth && !token) {
       console.log("ProtectedRoute: User not authenticated, redirecting to login");
       navigate('/auth/signin');
     }
     
-    // If we have a token and we're still loading after 3 seconds, try forcing a render
-    let timeoutId: ReturnType<typeof setTimeout>;
-    if (token && isLoading) {
-      timeoutId = setTimeout(() => {
-        console.log("ProtectedRoute: Loading timeout - forcing component render");
-        // Force render even if still technically loading
-        if (token) {
-          // This is a failsafe - if loading takes too long, we'll show the component anyway
-          // which will then handle any API requests it needs
-          console.log("ProtectedRoute: Token exists, attempting to render component even though auth is still loading");
-        }
-      }, 3000); // 3 second timeout
-    }
+    // No need for a loading timeout since we now have clear auth initialization state
     
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isAuth, isLoading, navigate, rest.path]);
-  
-  console.log(`ProtectedRoute[${rest.path}]: auth state = ${isAuth ? 'authenticated' : 'not authenticated'}, loading = ${isLoading}`);
+  }, [isAuth, isLoading, authInitialized, user, navigate, rest.path]);
   
   // Return a component function that respects authentication state
   return (
@@ -62,20 +51,33 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
         // Get token directly to be extra safe
         const token = localStorage.getItem('token');
         
+        // If auth is not initialized yet, show a loading indicator
+        if (!authInitialized) {
+          console.log(`ProtectedRoute[${rest.path}]: Auth not initialized yet, showing loading indicator`);
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <h2 className="text-xl font-semibold">Initializing...</h2>
+                <p className="text-muted-foreground">Setting up your session...</p>
+              </div>
+            </div>
+          );
+        }
+        
         // If user data is loaded (most secure case), render the component
         if (isAuth && user) {
-          console.log(`ProtectedRoute[${rest.path}]: Rendering protected component for ${user?.email}`);
+          console.log(`ProtectedRoute[${rest.path}]: Auth complete, rendering component for ${user?.email}`);
           return <Component {...props} />;
         }
         
-        // If we have a token but loading state has been going on too long
-        // Attempt to render the component anyway - it can handle its own loading states
-        if (token && !isLoading && !isAuth) {
-          console.log(`ProtectedRoute[${rest.path}]: Token exists but auth failed, attempting to render component`);
+        // If we have a token but auth failed (edge case), attempt to render anyway
+        if (token && !isLoading && !isAuth && authInitialized) {
+          console.log(`ProtectedRoute[${rest.path}]: Token exists but auth failed, rendering component anyway`);
           return <Component {...props} />;
         }
         
-        // If we have a token but still loading, only show loading state for a brief period
+        // If we have a token and auth is still loading, show loading indicator
         if (token && isLoading) {
           console.log(`ProtectedRoute[${rest.path}]: Authentication in progress - token exists but still loading user data`);
           return (
@@ -89,13 +91,7 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
           );
         }
         
-        // If we have a token but loading is complete, render the component
-        if (token && !isLoading) {
-          console.log(`ProtectedRoute[${rest.path}]: Rendering with token but no user data yet`);
-          return <Component {...props} />;
-        }
-        
-        // Otherwise show a message that the user needs to log in
+        // If auth is initialized, not loading, and we don't have a token, show login prompt
         return (
           <div className="min-h-screen flex items-center justify-center">
             <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md text-center">
@@ -117,19 +113,20 @@ const ProtectedRoute = ({ component: Component, ...rest }: { component: React.Co
 
 function Router() {
   console.log("Rendering Router component");
-  const { isAuth, user, isLoading } = useAuth();
+  const { isAuth, user, isLoading, authInitialized } = useAuth();
   const [location, navigate] = useLocation();
   
   useEffect(() => {
     console.log("Current location:", location);
   }, [location]);
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages, but only once auth is fully initialized
   useEffect(() => {
-    if (isAuth && location.startsWith('/auth')) {
+    if (authInitialized && isAuth && location.startsWith('/auth')) {
+      console.log("Router: Auth initialized and user authenticated, redirecting from auth page");
       navigate('/');
     }
-  }, [isAuth, location, navigate]);
+  }, [isAuth, authInitialized, location, navigate]);
   
   // Simple routing for demo purposes
   return (

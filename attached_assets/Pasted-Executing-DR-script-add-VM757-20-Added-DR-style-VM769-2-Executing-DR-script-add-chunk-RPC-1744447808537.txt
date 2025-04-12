@@ -1,0 +1,29 @@
+Executing DR script (add)...
+VM757:20 Added DR style.
+VM769:2 Executing DR script (add)...
+chunk-RPCDYKBN.js?v=6a168459:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+AuthContext.tsx:180 AuthContext - Computed auth state: {user: undefined, isAuth: false, isLoading: true, authInitialized: false}
+App.tsx:162 Rendering App component
+App.tsx:119 Rendering Router component
+App.tsx:55 ProtectedRoute[/investor/dashboard]: auth state = not authenticated, loading = true
+App.tsx:80 ProtectedRoute[/investor/dashboard]: Authentication in progress - token exists but still loading user data
+App.tsx:28 ProtectedRoute[/investor/dashboard]: token exists = true
+App.tsx:124 Current location: /investor/dashboard
+AuthContext.tsx:42 AuthContext - Running authentication check...
+AuthContext.tsx:47 AuthContext - Token status: Token exists (eyJhbGciOiJIUzI...)
+AuthContext.tsx:57 AuthContext - Token found in localStorage, attempting to validate...
+AuthContext.tsx:83 AuthContext - Successfully extracted user info from token: {id: '67f943c693e886dae905ec48', email: 'gg@gg.com', role: 'investor', exp: '4/19/2025, 2:19:31 PM'}
+auth.ts:137 Setting auth token in localStorage
+AuthContext.tsx:108 AuthContext - Setting user data: {id: '67f943c693e886dae905ec48', email: 'gg@gg.com', role: 'investor', walletAddress: undefined}
+AuthContext.tsx:110 AuthContext - User is now authenticated from token!
+AuthContext.tsx:114 AuthContext - Attempting to fetch fresh user data from server...
+auth.ts:106 Attempting to get current user with token Token exists
+AuthContext.tsx:180 AuthContext - Computed auth state: {user: 'gg@gg.com', isAuth: true, isLoading: true, authInitialized: false}
+auth.ts:118 Current user API response status: 200
+VM888:2 Executing DR script (add)...
+auth.ts:127 Current user data received: {user: {…}}
+AuthContext.tsx:117 AuthContext - Got fresh user data from server: {_id: '67f943c693e886dae905ec48', email: 'gg@gg.com', role: 'investor', createdAt: '2025-04-11T16:31:02.872Z', updatedAt: '2025-04-11T16:31:02.872Z', …}
+AuthContext.tsx:136 AuthContext - Authentication check complete
+AuthContext.tsx:180 AuthContext - Computed auth state: {user: 'gg@gg.com', isAuth: true, isLoading: false, authInitialized: true}
+App.tsx:40 ProtectedRoute: Loading timeout - forcing component render
+App.tsx:45 ProtectedRoute: Token exists, attempting to render component even though auth is still loading
