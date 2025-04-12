@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -45,7 +45,7 @@ interface MessageCenterProps {
   initialContactId?: string;
 }
 
-const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser }) => {
+const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser, initialContactId }) => {
   const [activeTab, setActiveTab] = useState<string>('contacts');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,6 +103,33 @@ const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser }) => {
     
     return () => clearInterval(intervalId);
   }, []);
+  
+  // Handler for selecting a contact
+  const handleContactSelect = useCallback((contact: Contact) => {
+    setActiveContact(contact);
+    setActiveTab('chat');
+    
+    // Reset unread count for this contact
+    setUnreadCounts(prev => ({
+      ...prev,
+      [contact.id]: 0
+    }));
+  }, []);
+  
+  // Handle initialContactId if provided
+  useEffect(() => {
+    // If we have contacts loaded and an initialContactId was provided
+    if (contacts.length > 0 && initialContactId) {
+      console.log("Checking for initial contact with ID:", initialContactId);
+      const foundContact = contacts.find(c => c.id === initialContactId);
+      if (foundContact) {
+        console.log("Found initial contact:", foundContact.name);
+        handleContactSelect(foundContact);
+      } else {
+        console.log("Initial contact not found in contacts list");
+      }
+    }
+  }, [contacts, initialContactId, handleContactSelect]);
 
   // Filter contacts based on search query
   const filteredContacts = contacts.filter(contact => 
@@ -117,18 +144,6 @@ const MessageCenter: React.FC<MessageCenterProps> = ({ currentUser }) => {
       .map(n => n[0])
       .join('')
       .toUpperCase();
-  };
-
-  // Handler for selecting a contact
-  const handleContactSelect = (contact: Contact) => {
-    setActiveContact(contact);
-    setActiveTab('chat');
-    
-    // Reset unread count for this contact
-    setUnreadCounts(prev => ({
-      ...prev,
-      [contact.id]: 0
-    }));
   };
 
   // Handler for closing the chat
