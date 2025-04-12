@@ -31,8 +31,19 @@ const StartupDashboardPage: React.FC = () => {
       }
       
       // MongoDB stores user IDs as strings in the _id field, not numbers
-      const userId = user._id || user.id;
-      console.log('🔍 Fetching startup data for user:', userId);
+      // Get the MongoDB ObjectID from the user object
+      const mongoId = user._id?.toString() || (typeof user.id === 'string' ? user.id : null);
+      console.log('🔍 Fetching startup data for user:', { 
+        mongoId,
+        id: user.id,
+        _id: user._id,
+        raw: user
+      });
+      
+      if (!mongoId) {
+        console.error("Cannot fetch startup: No valid MongoDB ID found in user object");
+        return null;
+      }
       
       // Retry mechanism to ensure we get the data
       const maxRetries = 2;
@@ -41,11 +52,13 @@ const StartupDashboardPage: React.FC = () => {
       
       while (retryCount <= maxRetries) {
         try {
-          console.log(`Attempt ${retryCount + 1} to fetch startup data`);
+          console.log(`Attempt ${retryCount + 1} to fetch startup data for MongoDB ID: ${mongoId}`);
           
-          // Use the GET method with a query parameter instead of a path parameter
-          // to avoid path encoding issues with MongoDB ObjectIDs
-          const res = await fetch(`/api/startups/user/${userId}`, {
+          // Use the GET method with the MongoDB ObjectID
+          const apiUrl = `/api/startups/user/${mongoId}`;
+          console.log(`API Request URL: ${apiUrl}`);
+          
+          const res = await fetch(apiUrl, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             },

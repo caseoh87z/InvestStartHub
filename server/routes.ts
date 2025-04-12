@@ -202,16 +202,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.params.userId;
       
+      // Add detailed logging to help debug
+      log(`GET /api/startups/user/${userId} request received`, 'api');
+      
       if (!mongoose.Types.ObjectId.isValid(userId)) {
+        log(`Invalid user ID format: ${userId}`, 'api');
         return res.status(400).json({ message: "Invalid user ID" });
       }
       
-      const startup = await Startup.findOne({ userId });
+      // Create a MongoDB ObjectID from the string
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      
+      // Log the query we're about to make
+      log(`Searching for startup with userId: ${userObjectId}`, 'api');
+      
+      // First check if any startups exist at all (for debugging)
+      const allStartups = await Startup.find({});
+      log(`Total startups in database: ${allStartups.length}`, 'api');
+      
+      if (allStartups.length > 0) {
+        log(`First startup userId: ${allStartups[0].userId}`, 'api');
+        log(`Comparing with: ${userObjectId}`, 'api');
+        
+        // For debug, let's log all user IDs in the system
+        const userIds = allStartups.map(s => s.userId.toString());
+        log(`All startup userIds in the system: ${JSON.stringify(userIds)}`, 'api');
+      }
+      
+      // Now perform the actual query for this user's startup using the ObjectID
+      const startup = await Startup.findOne({ userId: userObjectId });
       
       if (!startup) {
+        log(`No startup found for userId: ${userId}`, 'api');
         return res.status(404).json({ message: "Startup not found" });
       }
       
+      log(`Startup found for userId ${userId}: ${startup.name}`, 'api');
       res.json(startup);
     } catch (error) {
       log(`Get user startup error: ${error}`, 'api');

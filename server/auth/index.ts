@@ -34,10 +34,26 @@ export const generateToken = (user: IUser): string => {
   );
 };
 
+// Define the JwtUserPayload type
+interface JwtUserPayload {
+  id: string;
+  _id: string;
+  email: string;
+  role: string;
+  walletAddress?: string;
+  iat?: number;
+  exp?: number;
+}
+
 // Verify JWT token
-export const verifyToken = (token: string): {id: string, _id: string, email: string, role: string, walletAddress?: string} | null => {
+export const verifyToken = (token: string): JwtUserPayload | null => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Handle both string and object payloads (though in our case it should always be an object)
+    if (typeof decoded === 'object') {
+      return decoded as JwtUserPayload;
+    }
+    return null;
   } catch (error) {
     return null;
   }
