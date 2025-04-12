@@ -1,0 +1,43 @@
+AuthContext - Computed auth state: Object
+App.tsx:159 Rendering App component
+App.tsx:115 Rendering Router component
+AuthPage.tsx:26 AuthPage - Auth state: Object
+Auth.tsx:14 Auth page - auth state: Object
+App.tsx:120 Current location: /auth/signup
+AuthContext.tsx:42 AuthContext - Running authentication check...
+AuthContext.tsx:47 AuthContext - Token status: Token exists (eyJhbGciOiJIUzI...)
+AuthContext.tsx:57 AuthContext - Token found in localStorage, attempting to validate...
+AuthContext.tsx:83 AuthContext - Successfully extracted user info from token: Object
+auth.ts:137 Setting auth token in localStorage
+AuthContext.tsx:108 AuthContext - Setting user data: Object
+AuthContext.tsx:110 AuthContext - User is now authenticated from token!
+AuthContext.tsx:114 AuthContext - Attempting to fetch fresh user data from server...
+auth.ts:106 Attempting to get current user with token Token exists
+AuthContext.tsx:180 AuthContext - Computed auth state: Object
+2VM932:2 Executing DR script (add)...
+auth.ts:118 Current user API response status: 200
+auth.ts:127 Current user data received: Object
+AuthContext.tsx:117 AuthContext - Got fresh user data from server: Object
+AuthContext.tsx:136 AuthContext - Authentication check complete
+AuthContext.tsx:180 AuthContext - Computed auth state: Object
+AuthPage.tsx:71 Authentication started...
+AuthPage.tsx:76 Attempting login with: gg@gg.com
+auth.ts:63 Calling login API with credentials: gg@gg.com
+auth.ts:73 Login API response status: 200
+auth.ts:85 Storing auth token from login response
+auth.ts:89 Login API response data: Object
+AuthPage.tsx:79 Login successful, received data: Object
+AuthPage.tsx:83 Setting auth login state with token and user data
+AuthPage.tsx:93 Preparing navigation to dashboard: /investor/dashboard
+AuthContext.tsx:180 AuthContext - Computed auth state: Object
+AuthPage.tsx:104 Checking auth state before navigation:
+AuthPage.tsx:105 - Auth initialized: undefined
+AuthPage.tsx:106 - Is authenticated: false
+AuthPage.tsx:107 - Auth loading: true
+AuthPage.tsx:108 Navigating to dashboard after delay: /investor/dashboard
+App.tsx:115 Rendering Router component
+App.tsx:56 ProtectedRoute[/investor/dashboard]: Auth not initialized yet, showing loading indicator
+App.tsx:28 ProtectedRoute[/investor/dashboard]: auth state = Object
+App.tsx:120 Current location: /investor/dashboard
+2VM932:2 Executing DR script (add)...
+AuthContext.tsx:180 AuthContext - Computed auth state

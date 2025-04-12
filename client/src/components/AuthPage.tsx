@@ -54,6 +54,27 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  // Helper function to wait for auth to be fully initialized before navigation
+  const waitForAuthAndNavigate = (targetUrl: string) => {
+    const checkAndNavigate = () => {
+      console.log("Checking auth state before navigation:");
+      console.log("- Auth initialized:", authInitialized);
+      console.log("- Is authenticated:", isAuth);
+      console.log("- Auth loading:", authLoading);
+      
+      if (authInitialized && isAuth && !authLoading) {
+        console.log("Auth is fully initialized, navigating to:", targetUrl);
+        navigate(targetUrl);
+      } else {
+        console.log("Auth not ready yet, waiting another 500ms...");
+        setTimeout(checkAndNavigate, 500);
+      }
+    };
+    
+    // Start checking after a short delay
+    setTimeout(checkAndNavigate, 500);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -98,17 +119,8 @@ const AuthPage: React.FC = () => {
             description: "Preparing your dashboard...",
           });
           
-          // Wait a bit longer for auth state to be fully updated
-          // This ensures the dashboard queries will have the proper auth state
-          setTimeout(() => {
-            console.log("Checking auth state before navigation:");
-            console.log("- Auth initialized:", authInitialized);
-            console.log("- Is authenticated:", isAuth);
-            console.log("- Auth loading:", authLoading);
-            console.log("Navigating to dashboard after delay:", targetUrl);
-            
-            navigate(targetUrl);
-          }, 2000);
+          // Wait for auth to be fully initialized before navigating
+          waitForAuthAndNavigate(targetUrl);
         } else {
           throw new Error("Invalid response from server");
         }
@@ -146,17 +158,8 @@ const AuthPage: React.FC = () => {
             description: "Preparing your dashboard...",
           });
           
-          // Wait a bit longer for auth state to be fully updated
-          // This ensures the dashboard queries will have the proper auth state
-          setTimeout(() => {
-            console.log("Checking auth state before navigation:");
-            console.log("- Auth initialized:", authInitialized);
-            console.log("- Is authenticated:", isAuth);
-            console.log("- Auth loading:", authLoading);
-            console.log("Navigating to dashboard after delay:", targetUrl);
-            
-            navigate(targetUrl);
-          }, 2000);
+          // Wait for auth to be fully initialized before navigating
+          waitForAuthAndNavigate(targetUrl);
         } else {
           throw new Error("Invalid response from server");
         }

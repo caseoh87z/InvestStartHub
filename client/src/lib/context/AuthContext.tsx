@@ -16,7 +16,7 @@ interface AuthContextType {
   login: (token: string, userData: User) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
-  authInitialized?: boolean;
+  authInitialized: boolean; // Not optional anymore
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   login: () => {},
   logout: () => {},
   updateUser: () => {},
+  authInitialized: false, // Add default value
 });
 
 export const useAuth = () => useContext(AuthContext);
