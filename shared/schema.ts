@@ -55,7 +55,8 @@ export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   startupId: integer("startup_id").notNull().references(() => startups.id),
   name: text("name").notNull(),
-  type: text("type").notNull(),
+  type: text("type").notNull(), // file type (pdf, docx, etc.)
+  documentType: text("document_type").notNull(), // Pitch Deck, Financial Report, etc.
   fileUrl: text("file_url").notNull(),
   size: integer("size").notNull(),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
@@ -65,6 +66,7 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
   startupId: true,
   name: true,
   type: true,
+  documentType: true,
   fileUrl: true,
   size: true,
 });
